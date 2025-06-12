@@ -1,41 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { useAuth } from '../../context/AuthContext';
 
 export default function RegisterScreen() {
-  const { register } = useAuth();
+  const { register, error, clearError, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
+  const [registrationKey, setRegistrationKey] = useState('');
+  const [localLoading, setLocalLoading] = useState(false);
+  
+  // Use isLoading combining local state and auth state
+  const isLoading = localLoading || authLoading;
+  
+  // Show error alert when error state changes
+  useEffect(() => {
+    if (error) {
+      Alert.alert('הרשמה נכשלה', error, [
+        { text: 'אישור', onPress: clearError }
+      ]);
+    }
+  }, [error, clearError]);
+  
   const handleRegister = async () => {
-    if (!name || !email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+    if (!name || !email || !password || !confirmPassword || !registrationKey) {
+      Alert.alert('שגיאה', 'אנא מלא את כל השדות');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      Alert.alert('שגיאה', 'הסיסמאות אינן תואמות');
       return;
     }
-      try {
-      setIsLoading(true);
-      const success = await register(name, email, password);
-        if (success) {
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('שגיאה', 'כתובת האימייל אינה תקינה');
+      return;
+    }
+    
+    // Validate password strength
+    if (password.length < 6) {
+      Alert.alert('שגיאה', 'הסיסמה חייבת להכיל לפחות 6 תווים');
+      return;
+    }
+      
+    try {
+      setLocalLoading(true);
+      const success = await register(name, email, password, registrationKey);
+      if (success) {
         router.replace('../(tabs)');
-      } else {
-        Alert.alert('Registration Failed', 'Failed to create account');
       }
-    } catch (error) {
-      Alert.alert('Error', 'An error occurred during registration');
-      console.error(error);
+      // Error alerts are handled by the useEffect above
+    } catch (error: any) {
+      // This should not normally execute due to error handling in AuthContext
+      console.error('Unexpected registration error:', error);
     } finally {
-      setIsLoading(false);
+      setLocalLoading(false);
     }
   };
 
@@ -76,20 +102,38 @@ export default function RegisterScreen() {
           placeholder="הקלד את הסיסמא שלך"
           secureTextEntry
         />
-      </View>
-
-      <View style={styles.inputContainer}>
+      </View>      <View style={styles.inputContainer}>
         <Text style={styles.label}>וידוי סיסמא</Text>
         <TextInput
           style={styles.input}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           placeholder="הקלד את הסיסמא שוב"
-          secureTextEntry/>
+          secureTextEntry
+        />
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>הרשם</Text>
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>קוד הרשמה</Text>
+        <TextInput
+          style={styles.input}
+          value={registrationKey}
+          onChangeText={setRegistrationKey}
+          placeholder="הכנס את קוד ההרשמה שקיבלת"
+          autoCapitalize="none"
+        />
+      </View>
+
+      <TouchableOpacity 
+        style={styles.button} 
+        onPress={handleRegister}
+        disabled={isLoading}>
+        
+        {isLoading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>הרשם</Text>
+        )}
       </TouchableOpacity>
        <View style={styles.linkContainer}>
         <Text style={styles.linkText}>יש לך כבר משתמש? </Text>   

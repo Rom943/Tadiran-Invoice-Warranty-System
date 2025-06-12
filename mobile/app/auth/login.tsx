@@ -1,34 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { useAuth } from '../../context/AuthContext';
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { login, error, clearError, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
   const router = useRouter();
-
+  
+  // Use isLoading combining local state and auth state
+  const isLoading = localLoading || authLoading;
+  
+  // Show error alert when error state changes
+  useEffect(() => {
+    if (error) {
+      Alert.alert('התחברות נכשלה', error, [
+        { text: 'אישור', onPress: clearError }
+      ]);
+    }
+  }, [error, clearError]);
+  
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('שגיאה', 'אנא מלא את כל השדות');
       return;
     }
-      try {
-      setIsLoading(true);
+    
+    try {
+      setLocalLoading(true);
       const success = await login(email, password);
+      
       if (success) {
         router.replace('../(tabs)');
-      } else {
-        Alert.alert('התחברות נכשלה', 'אימייל או סיסמה שגויים');
       }
-    } catch (error) {
-      Alert.alert('Error', 'An error occurred during login');
-      console.error(error);
+      // Error alerts are handled by the useEffect above
+      
+    } catch (error: any) {
+      // This should not normally execute due to error handling in AuthContext
+      console.error('Unexpected login error:', error);
     } finally {
-      setIsLoading(false);
+      setLocalLoading(false);
     }
   };
 

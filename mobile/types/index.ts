@@ -3,6 +3,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  role: 'admin' | 'installer';
   // Add more user fields as needed
 }
 

@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model InstallerUser {
+  id              String                    @id @default(cuid())
+  email           String                    @unique
+  name            String?
+  password        String
+  warranties      Warranty[]                @relation("UserWarranties")
+  registrationKey InstallerRegistrationKey?
+  createdAt       DateTime                  @default(now())
+}
+
+model Warranty {
+  id          String         @id @default(cuid())
+  installerId String
+  installer   InstallerUser  @relation("UserWarranties", fields: [installerId], references: [id])
+  productSN   String
+  imageUrl    String?
+  clietnName  String
+  installDate DateTime
+  status      WarrantyStatus @default(PENDING)
+  adminUserId String?
+  adminUser   AdminUser?     @relation("AdminCheckedWarranties", fields: [adminUserId], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model AdminUser {
+  id                String     @id @default(cuid())
+  email             String     @unique
+  name              String?
+  password          String
+  checkedWarranties Warranty[] @relation("AdminCheckedWarranties")
+  generatedKeys     InstallerRegistrationKey[] @relation("AdminGeneratedKeys")
+  createdAt         DateTime   @default(now())
+}
+model InstallerRegistrationKey {
+  id          String         @id @default(cuid())
+  key         String         @unique
+  installer   InstallerUser? @relation(fields: [installerId], references: [id])
+  installerId String?        @unique
+  admin       AdminUser?     @relation("AdminGeneratedKeys", fields: [adminId], references: [id])
+  adminId     String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+
+enum WarrantyStatus {
+  APPROVED
+  PENDING
+  REJECTED
+  IN_PROGRESS
+}
