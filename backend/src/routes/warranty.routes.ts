@@ -30,16 +30,16 @@ const router = Router();
  *             type: object
  *             required:
  *               - productSN
- *               - clietnName
+ *               - clientName
  *               - installDate
  *               - invoiceImage
  *             properties:
  *               productSN:
  *                 type: string
  *                 description: Product serial number
- *               clietnName:
+ *               clientName:
  *                 type: string
- *                 description: Client name (Note: there's a typo in schema)
+ *                 description: Client name
  *               installDate:
  *                 type: string
  *                 format: date
@@ -63,7 +63,7 @@ router.post('/', [
   requireInstaller,
   uploadInvoiceImage,
   body('productSN').notEmpty().withMessage('Product serial number is required'),
-  body('clietnName').notEmpty().withMessage('Client name is required'),
+  body('clientName').notEmpty().withMessage('Client name is required'),
   body('installDate').isISO8601().toDate().withMessage('Valid installation date is required')
 ], warrantyController.createWarranty);
 
@@ -160,7 +160,7 @@ router.get('/:id', [
  *               productSN:
  *                 type: string
  *                 description: Product serial number
- *               clietnName:
+ *               clientName:
  *                 type: string
  *                 description: Client name
  *               installDate:

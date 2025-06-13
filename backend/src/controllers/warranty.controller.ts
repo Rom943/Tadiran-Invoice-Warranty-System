@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
-import { PrismaClient } from '../../generated/prisma';
+import { PrismaClient, WarrantyStatus } from '../../generated/prisma';
 import { ApiError, errorHandler, formatValidationErrors } from '../utils/error-handler';
 import { uploadImage } from '../utils/cloudinary';
-import ocrService from '../services/ocr.service';
+import { extractTextFromImage } from '../services/ocr.service'; // Correctly import extractTextFromImage
 import fs from 'fs';
 import path from 'path';
+import config from '../config/env.config'; // Added import for config
 
 const prisma = new PrismaClient();
 
@@ -53,6 +54,7 @@ const prisma = new PrismaClient();
  *         description: Not authorized
  */
 export const createWarranty = async (req: Request, res: Response): Promise<void> => {
+  let invoiceImagePath: string | undefined = undefined; // Define here for broader scope
   try {
     // Check authentication
     if (!req.user) {
@@ -73,55 +75,62 @@ export const createWarranty = async (req: Request, res: Response): Promise<void>
     if (!req.file) {
       throw new ApiError('Invoice image is required', 400);
     }
+    invoiceImagePath = req.file.path; // Assign path for OCR and cleanup
 
-    const { productSN, clietnName, installDate } = req.body;
+    const { productSN, clientName, installDate } = req.body;
     const installDateObj = new Date(installDate);
     
-    // Upload image to Cloudinary
-    const invoiceImagePath = req.file.path;
-    const imageUrl = await uploadImage(invoiceImagePath);
-    
-    // Process image with OCR
-    const ocrResult = await ocrService.verifyInstallationDate(invoiceImagePath, installDateObj);
-    
-    // Determine warranty status based on OCR results
-    const warrantyStatus = ocrResult.matches ? 'APPROVED' : 
-                          (ocrResult.extractedDates.length > 0 ? 'REJECTED' : 'IN_PROGRESS');
+    // Perform OCR on the local uploaded image first
+    let ocrText = '';
+    if (invoiceImagePath) {
+      try {
+        ocrText = await extractTextFromImage(invoiceImagePath);
+      } catch (ocrError) {
+        console.warn('OCR processing failed:', ocrError);
+        // Decide if you want to throw an error or proceed without OCR text
+      }
+    }
 
-    // Create warranty
-    const warranty = await prisma.warranty.create({
+    // Upload image to Cloudinary
+    const cloudinaryUrl = await uploadImage(invoiceImagePath); // uploadImage returns the URL string
+
+    // Create warranty entry in database
+    const newWarranty = await prisma.warranty.create({
       data: {
         productSN,
-        clietnName,
+        clientName,
         installDate: installDateObj,
-        imageUrl,
-        status: warrantyStatus as any,
-        installerId: req.user.userId
-      }
+        imageUrl: cloudinaryUrl,
+        status: WarrantyStatus.PENDING,
+        installer: {
+          connect: {
+            id: (req.user as any).userId // Corrected: Use userId from req.user
+          }
+        }
+      },
     });
 
-    // Clean up temp file
-    fs.unlinkSync(invoiceImagePath);
-
-    // Return success response
     res.status(201).json({
       success: true,
       message: 'Warranty created successfully',
-      data: {
-        warranty,
-        ocrResults: {
-          status: warrantyStatus,
-          extractedDates: ocrResult.extractedDates,
-          matches: ocrResult.matches
-        }
-      }
+      data: newWarranty,
     });
-  } catch (error) {
-    // Clean up temp file if it exists
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
+
+  } catch (error: any) { // Catches errors from try block
+    // console.log('--- DEBUG: res object in createWarranty before calling errorHandler ---');
+    // console.log(typeof res);
+    // console.log(Object.keys(res)); // Log keys to see if it looks like an Express response
+    // console.log('Is res.status a function?', typeof res.status === 'function');
+    errorHandler(res, error); // Corrected: Swapped res and error arguments
+  } finally {
+    // Clean up uploaded file from temp directory
+    if (invoiceImagePath) {
+      try {
+        fs.unlinkSync(invoiceImagePath);
+      } catch (cleanupError) {
+        console.error('Error deleting temp file:', cleanupError);
+      }
     }
-    errorHandler(res, error);
   }
 };
 

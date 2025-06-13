@@ -27,7 +27,7 @@ export default function WarrantyFormScreen() {  // Form state
   const formatDate = (date: Date) => {
     return date.toLocaleDateString();
   };
-    // Pick image from gallery
+  // Pick image from gallery
   const pickImage = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -60,6 +60,40 @@ export default function WarrantyFormScreen() {  // Form state
       Alert.alert('Error', 'Failed to pick image');
     }
   };
+  
+  // Take a photo with camera
+  const takePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission required', 'Please allow access to your camera');
+        return;
+      }
+      
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+        aspect: [4, 3]
+      });
+      
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        // Get file extension
+        const uri = result.assets[0].uri;
+        const fileExtension = uri.substring(uri.lastIndexOf('.') + 1);
+        
+        setInvoiceFile({
+          type: 'image',
+          uri: uri,
+          name: `invoice_camera.${fileExtension}`,
+        });
+      }
+    } catch (error) {
+      console.log('Error taking photo:', error);
+      Alert.alert('Error', 'Failed to take photo');
+    }
+  };
   // Pick PDF document
   const pickDocument = async () => {
     try {
@@ -76,7 +110,7 @@ export default function WarrantyFormScreen() {  // Form state
         });
       }
     } catch (error) {
-      console.error('Error picking document:', error);
+      console.log('Error picking document:', error);
       Alert.alert('Error', 'Failed to pick document');
     }
   };
@@ -86,7 +120,7 @@ export default function WarrantyFormScreen() {  // Form state
     type: 'success' | 'error' | 'info';
     message: string;
   } | null>(null);
-    // Submit form
+  // Submit form
   const handleSubmit = async () => {
     // Reset errors
     const newErrors = {
@@ -126,25 +160,56 @@ export default function WarrantyFormScreen() {  // Form state
     
     try {
       setIsSubmitting(true);
-        // Format the data for submission
+      
+      // Format the data for submission
       const warrantyData = {
         clientName,
         productInfo,
         installationDate: installationDate.toISOString().split('T')[0],
-        invoiceFile: invoiceFile || undefined,
       };
       
-      // Submit the warranty request
-      const result = await WarrantyService.submitWarranty(warrantyData);
+      // Log submission attempt for debugging
+      console.log('Attempting to submit warranty with data:', JSON.stringify({
+        ...warrantyData,
+        invoiceFile: invoiceFile ? {
+          type: invoiceFile.type,
+          name: invoiceFile.name,
+          // Don't log the full URI
+        } : null
+      }));
       
-      // If the invoice was uploaded, process it with OCR
+      // Submit the warranty request with file if it exists
+      let result;
       if (invoiceFile) {
+        try {
+          result = await WarrantyService.submitWarranty({
+            ...warrantyData,
+            invoiceFile: invoiceFile
+          });
+          console.log('Warranty submission successful:', result);
+        } catch (submitError: any) {
+          console.log('Warranty submission error:', submitError.message);
+          throw submitError;
+        }
+      } else {
+        // TypeScript will complain if we try to call submitWarranty without invoiceFile
+        // This should not happen due to form validation, but we'll handle it
+        setNotification({
+          type: 'error',
+          message: 'יש להעלות חשבונית - תמונה או PDF'
+        });
+        setIsSubmitting(false);
+        return;
+      }
+        // Process the invoice with OCR after submission
+      try {
         // Start OCR processing
         const status = await WarrantyService.processInvoice(
           invoiceFile.uri,
           warrantyData.installationDate
         );
-          // Set notification based on the status
+        
+        // Set notification based on the status
         if (status === 'approved') {
           setNotification({
             type: 'success',
@@ -161,20 +226,49 @@ export default function WarrantyFormScreen() {  // Form state
             message: 'הטופס נשלח בהצלחה! הבקשה לאישור אחריות נמצאת בבדיקה ידנית.'
           });
         }
-      } else {
-        Alert.alert('הצלחה', 'הטופס נשלח בהצלחה! ללא חשבונית.');
+      } catch (error) {
+        console.log('Error processing invoice:', error);
+        setNotification({
+          type: 'info',
+          message: 'הטופס נשלח בהצלחה! אך הייתה שגיאה בעיבוד החשבונית.'
+        });
       }
       
       // Reset form
       setClientName('');
       setProductInfo('');
       setInstallationDate(new Date());
-      setInvoiceFile(null);    } catch (error) {
-      console.error('שגיאה בשליחת הטופס', error);
+      setInvoiceFile(null);    } catch (error: any) {
+      console.log('שגיאה בשליחת הטופס', error);
+      
+      // Detailed error message for debugging
+      let detailedError = `Error: ${error.message}`;
+      if (error.response) {
+        detailedError += `\nStatus: ${error.response.status}`;
+        if (error.response.data) {
+          detailedError += `\nData: ${JSON.stringify(error.response.data)}`;
+        }
+      }
+      
       setNotification({
         type: 'error',
-        message: 'שגיאה בשליחת הטופס. אנא נסה שוב מאוחר יותר.'
+        message: `שגיאה בשליחת הטופס\n${detailedError}`
       });
+      
+      // Show specific error types
+      if (error.message.includes('Authentication failed')) {
+        Alert.alert(
+          'שגיאת אימות',
+          'נדרש להתחבר מחדש. אנא צא מהמערכת והתחבר שוב.',
+          [{ text: 'הבנתי' }]
+        );
+      } else if (error.message.includes('להתחבר לשרת') || error.message.includes('Network Error') || error.message.includes('timeout')) {
+        Alert.alert(
+          'בעיית חיבור לשרת',
+          'לא ניתן ליצור קשר עם השרת. בדוק את חיבור האינטרנט שלך או נסה שוב מאוחר יותר.',
+          [{ text: 'הבנתי' }]
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -263,12 +357,16 @@ export default function WarrantyFormScreen() {  // Form state
       
       <View style={styles.formSection}>
         <Text style={styles.sectionTitle}>העלאת חשבונית</Text>
-        
-        <Text style={styles.label}>*העלה חשבונית - תמונה\PDF</Text>
+          <Text style={styles.label}>*העלה חשבונית - תמונה\PDF</Text>
         <View style={styles.uploadButtons}>
           <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
             <Ionicons name="image" size={24} color="#fff" />
-            <Text style={styles.uploadButtonText}>תמונה</Text>
+            <Text style={styles.uploadButtonText}>גלריה</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.uploadButton} onPress={takePhoto}>
+            <Ionicons name="camera" size={24} color="#fff" />
+            <Text style={styles.uploadButtonText}>מצלמה</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.uploadButton} onPress={pickDocument}>
@@ -408,6 +506,8 @@ const styles = StyleSheet.create({
   },
   uploadButtons: {
     flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   uploadButton: {

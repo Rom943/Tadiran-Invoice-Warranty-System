@@ -15,16 +15,15 @@ export default function WarrantyHistoryScreen() {
   // Load warranty data on component mount
   useEffect(() => {
     loadWarranties();
-  }, []);
-  // Function to load warranties from service
+  }, []);  // Function to load warranties from service
   const loadWarranties = async (refresh = false) => {
     try {
       if (!refresh) {
         setIsLoading(true);
       }
       setError(null);
-      const data = await WarrantyService.getAllWarranties();
-      setWarranties(data);
+      const response = await WarrantyService.getAllWarranties();
+      setWarranties(response.warranties); // Extract just the warranties array
     } catch (err) {
       console.error('Failed to load warranties:', err);
       setError('Failed to load warranty data. Please try again.');

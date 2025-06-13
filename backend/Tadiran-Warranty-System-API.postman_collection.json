@@ -1,0 +1,369 @@
+{
+	"info": {
+		"_postman_id": "5a79db32-8bec-4b9e-b191-a64e0e4e6f81",
+		"name": "Tadiran Warranty System",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"securepassword\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"login"
+							]
+						},
+						"description": "Login as an admin user"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"logout"
+							]
+						},
+						"description": "Logout admin user"
+					},
+					"response": []
+				},
+				{
+					"name": "Register Admin",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"newadmin@example.com\",\n    \"password\": \"securepassword\",\n    \"name\": \"New Admin\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"register"
+							]
+						},
+						"description": "Register a new admin user (requires admin authentication)"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Session",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/check-session",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"check-session"
+							]
+						},
+						"description": "Check if admin session is valid"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Warranties",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/warranties?page=1&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"warranties"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "status",
+									"value": "PENDING",
+									"disabled": true
+								},
+								{
+									"key": "installerId",
+									"value": "123",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get all warranty requests (admin only)"
+					},
+					"response": []
+				}
+			],
+			"description": "Admin endpoints"
+		},
+		{
+			"name": "Installer",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"installer@example.com\",\n    \"password\": \"securepassword\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/installer/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"installer",
+								"login"
+							]
+						},
+						"description": "Login as an installer"
+					},
+					"response": []
+				},
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"newinstaller@example.com\",\n    \"password\": \"securepassword\",\n    \"name\": \"New Installer\",\n    \"registrationKey\": \"ABC123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/installer/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"installer",
+								"register"
+							]
+						},
+						"description": "Register a new installer using a valid registration key"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/installer/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"installer",
+								"logout"
+							]
+						},
+						"description": "Logout installer"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Session",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/installer/check-session",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"installer",
+								"check-session"
+							]
+						},
+						"description": "Check if installer session is valid"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Warranties",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/installer/warranties?page=1&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"installer",
+								"warranties"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "status",
+									"value": "PENDING",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get all warranties created by the authenticated installer"
+					},
+					"response": []
+				}
+			],
+			"description": "Installer endpoints"
+		},
+		{
+			"name": "Warranty",
+			"item": [
+				{
+					"name": "Create Warranty",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "clientName",
+									"value": "Test Client",
+									"type": "text"
+								},
+								{
+									"key": "productInfo",
+									"value": "AC Model XYZ123",
+									"type": "text"
+								},
+								{
+									"key": "installationDate",
+									"value": "2025-06-01",
+									"type": "text"
+								},
+								{
+									"key": "invoiceFile",
+									"type": "file",
+									"src": "/path/to/invoice.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/installer/warranties",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"installer",
+								"warranties"
+							]
+						},
+						"description": "Submit a new warranty request"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		}
+	]
+}

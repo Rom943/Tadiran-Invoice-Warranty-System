@@ -22,6 +22,7 @@ model InstallerUser {
   warranties      Warranty[]                @relation("UserWarranties")
   registrationKey InstallerRegistrationKey?
   createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
 }
 
 model Warranty {
@@ -30,7 +31,7 @@ model Warranty {
   installer   InstallerUser  @relation("UserWarranties", fields: [installerId], references: [id])
   productSN   String
   imageUrl    String?
-  clietnName  String
+  clientName  String
   installDate DateTime
   status      WarrantyStatus @default(PENDING)
   adminUserId String?

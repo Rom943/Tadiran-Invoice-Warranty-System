@@ -175,7 +175,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       data: {
         id: user.id,
         email: user.email,
-        name: user.name
+        name: user.name,
+        token: token //for testing purposes, you might not want to return the token in production
       }
     });
   } catch (error) {
@@ -301,4 +302,48 @@ export const logout = (req: Request, res: Response): void => {
     success: true,
     message: 'Logout successful'
   });
+};
+
+/**
+ * @swagger
+ * /api/admin/check-session:
+ *   get:
+ *     summary: Check if admin session is valid
+ *     description: Verifies if the current JWT token is valid for an admin user
+ *     tags: [Admin]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Session status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized - Invalid or expired session
+ */
+export const checkSession = (req: Request, res: Response): void => {
+  // If we've reached this point, it means the auth middleware has
+  // already validated the token, so we can just return success
+  if (req.user) {
+    res.status(200).json({
+      success: true,
+      message: 'Session is valid',
+      data: {
+        userId: req.user.userId,
+        email: req.user.email,
+      }
+    });
+  } else {
+    res.status(401).json({
+      success: false,
+      message: 'Invalid or expired session'
+    });
+  }
 };

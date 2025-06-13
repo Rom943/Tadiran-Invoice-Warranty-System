@@ -153,4 +153,21 @@ router.get('/warranties', authenticate, requireAdmin, adminController.getWarrant
  */
 router.post('/logout', adminController.logout);
 
+/**
+ * @swagger
+ * /api/admin/check-session:
+ *   get:
+ *     summary: Check if admin session is valid
+ *     description: Verifies if the current JWT token is valid for an admin user
+ *     tags: [Admin]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Session status
+ *       401:
+ *         description: Unauthorized - Invalid or expired session
+ */
+router.get('/check-session', authenticate, requireAdmin, adminController.checkSession);
+
 export default router;
