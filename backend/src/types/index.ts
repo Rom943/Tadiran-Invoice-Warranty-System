@@ -53,3 +53,20 @@ export interface InstallerRegistrationKeyDto {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface OCRValidationResult {
+  status: 'APPROVED' | 'REJECTED' | 'IN_PROGRESS';
+  extractedDates: Date[];
+  ocrText: string;
+  matchingDate?: Date;
+  daysDifference?: number;
+  error?: string;
+}
+
+export interface WarrantyCreationData {
+  productSN: string;
+  clientName: string;
+  installDate: Date;
+  imageUrl: string;
+  ocrValidation?: OCRValidationResult;
+}

@@ -3,7 +3,7 @@ import { validationResult } from 'express-validator';
 import { PrismaClient, WarrantyStatus } from '../../generated/prisma';
 import { ApiError, errorHandler, formatValidationErrors } from '../utils/error-handler';
 import { uploadImage } from '../utils/cloudinary';
-import { extractTextFromImage } from '../services/ocr.service'; // Correctly import extractTextFromImage
+import { validateWarrantyByOCR } from '../services/ocr.service';
 import fs from 'fs';
 import path from 'path';
 import config from '../config/env.config'; // Added import for config
@@ -69,9 +69,7 @@ export const createWarranty = async (req: Request, res: Response): Promise<void>
         errors: formatValidationErrors(errors.array())
       });
       return;
-    }
-
-    // Check if invoice image was uploaded
+    }    // Check if invoice image was uploaded
     if (!req.file) {
       throw new ApiError('Invoice image is required', 400);
     }
@@ -80,18 +78,34 @@ export const createWarranty = async (req: Request, res: Response): Promise<void>
     const { productSN, clientName, installDate } = req.body;
     const installDateObj = new Date(installDate);
     
-    // Perform OCR on the local uploaded image first
-    let ocrText = '';
+    // Perform OCR validation on the uploaded image
+    let ocrValidation;
+    let warrantyStatus: WarrantyStatus = WarrantyStatus.PENDING; // Default status
+    
     if (invoiceImagePath) {
       try {
-        ocrText = await extractTextFromImage(invoiceImagePath);
+        console.log('Starting OCR validation for warranty creation...');
+        ocrValidation = await validateWarrantyByOCR(invoiceImagePath, installDateObj);
+          // Set warranty status based on OCR validation result
+        warrantyStatus = ocrValidation.status as WarrantyStatus;
+        
+        console.log(`OCR validation completed. Status: ${warrantyStatus}`, {
+          extractedDatesCount: ocrValidation.extractedDates.length,
+          matchingDate: ocrValidation.matchingDate?.toISOString(),
+          daysDifference: ocrValidation.daysDifference
+        });
       } catch (ocrError) {
-        console.warn('OCR processing failed:', ocrError);
-        // Decide if you want to throw an error or proceed without OCR text
+        console.warn('OCR validation failed:', ocrError);
+        // Set to IN_PROGRESS if OCR fails
+        warrantyStatus = WarrantyStatus.IN_PROGRESS;
+        ocrValidation = {
+          status: 'IN_PROGRESS',
+          extractedDates: [],
+          ocrText: '',
+          error: ocrError instanceof Error ? ocrError.message : 'OCR processing failed'
+        };
       }
-    }
-
-    // Upload image to Cloudinary
+    }    // Upload image to Cloudinary
     const cloudinaryUrl = await uploadImage(invoiceImagePath); // uploadImage returns the URL string
 
     // Create warranty entry in database
@@ -101,7 +115,7 @@ export const createWarranty = async (req: Request, res: Response): Promise<void>
         clientName,
         installDate: installDateObj,
         imageUrl: cloudinaryUrl,
-        status: WarrantyStatus.PENDING,
+        status: warrantyStatus, // Use the status determined by OCR validation
         installer: {
           connect: {
             id: (req.user as any).userId // Corrected: Use userId from req.user
@@ -110,10 +124,35 @@ export const createWarranty = async (req: Request, res: Response): Promise<void>
       },
     });
 
+    // Create appropriate response message based on OCR result
+    let responseMessage = 'Warranty created successfully';
+    if (ocrValidation) {
+      switch (ocrValidation.status) {
+        case 'APPROVED':
+          responseMessage = 'Warranty created and automatically approved - invoice date verified';
+          break;
+        case 'REJECTED':
+          responseMessage = 'Warranty created but rejected - invoice date outside acceptable range';
+          break;
+        case 'IN_PROGRESS':
+          responseMessage = ocrValidation.error || 'Warranty created and pending manual review - could not automatically verify invoice date';
+          break;
+      }
+    }
+
     res.status(201).json({
       success: true,
-      message: 'Warranty created successfully',
-      data: newWarranty,
+      message: responseMessage,
+      data: {
+        ...newWarranty,
+        ocrValidation: ocrValidation ? {
+          status: ocrValidation.status,
+          extractedDatesCount: ocrValidation.extractedDates.length,
+          matchingDate: ocrValidation.matchingDate?.toISOString(),
+          daysDifference: ocrValidation.daysDifference,
+          error: ocrValidation.error
+        } : undefined
+      },
     });
 
   } catch (error: any) { // Catches errors from try block
