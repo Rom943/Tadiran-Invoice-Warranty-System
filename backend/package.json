@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@google-cloud/vision": "^5.2.0",
     "@prisma/client": "^6.9.0",
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.9",
@@ -19,7 +20,6 @@
     "prisma": "^6.9.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "tesseract.js": "^6.0.1",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
@@ -28,7 +28,6 @@
     "@types/node": "^24.0.1",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
-    "@types/tesseract.js": "^2.0.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"
   },

@@ -24,6 +24,7 @@ export default function WarrantyHistoryScreen() {
       setError(null);
       const response = await WarrantyService.getAllWarranties();
       setWarranties(response.warranties); // Extract just the warranties array
+      console.log('Warranties loaded:', response.warranties);
     } catch (err) {
       console.error('Failed to load warranties:', err);
       setError('Failed to load warranty data. Please try again.');
@@ -64,7 +65,7 @@ export default function WarrantyHistoryScreen() {
         textColor = { color: '#856404' };
         statusText = 'בתהליך';
         break;
-      case 'manual_review':
+      case 'in_progress':
         badgeStyle = { backgroundColor: '#d1ecf1' };
         textColor = { color: '#0c5460' };
         statusText = 'בבדיקה';
@@ -90,7 +91,7 @@ export default function WarrantyHistoryScreen() {
         return 'נדחה';
       case 'pending':
         return 'בתהליך';
-      case 'manual_review':
+      case 'in_progress':
         return 'בבדיקה';
       default:
         return status;  
@@ -104,7 +105,7 @@ export default function WarrantyHistoryScreen() {
       { id: 'approved', label: 'אושר' },
       { id: 'rejected', label: 'נדחה' },
       { id: 'pending', label: 'בתהליך' },
-      { id: 'manual_review', label: "בבדיקה" },
+      { id: 'in_progress', label: "בבדיקה" },
     ];
 
     return (

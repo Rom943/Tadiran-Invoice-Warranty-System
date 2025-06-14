@@ -1,11 +1,51 @@
 // filepath: src/services/ocr.service.ts
-import { createWorker, PSM } from 'tesseract.js';
+import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { parseISO, isEqual, parse, isValid, differenceInDays } from 'date-fns';
 import fs from 'fs';
 import path from 'path';
 import config from '../config/env.config';
 
-// Common date formats found in invoices
+// Initialize Google Cloud Vision client
+let visionClient: ImageAnnotatorClient;
+
+try {
+  // Check if we have base64-encoded credentials in the environment variable
+  if (config.googleVision.keyFilePath) {
+    try {
+      // Try to decode base64 credentials
+      const decodedCredentials = Buffer.from(config.googleVision.keyFilePath, 'base64').toString('utf-8');
+      const credentials = JSON.parse(decodedCredentials);
+      
+      visionClient = new ImageAnnotatorClient({
+        credentials: credentials,
+        projectId: config.googleVision.projectId || credentials.project_id,
+      });
+      console.log('Google Cloud Vision initialized with base64-encoded credentials');
+    } catch (base64Error) {
+      // If base64 decoding fails, treat it as a file path
+      if (fs.existsSync(config.googleVision.keyFilePath)) {
+        visionClient = new ImageAnnotatorClient({
+          keyFilename: config.googleVision.keyFilePath,
+          projectId: config.googleVision.projectId,
+        });
+        console.log('Google Cloud Vision initialized with key file');
+      } else {
+        throw new Error(`Invalid base64 credentials or file not found: ${config.googleVision.keyFilePath}`);
+      }
+    }
+  } else {
+    // Use default credentials (for production environments)
+    visionClient = new ImageAnnotatorClient({
+      projectId: config.googleVision.projectId,
+    });
+    console.log('Google Cloud Vision initialized with default credentials');
+  }
+} catch (error) {
+  console.error('Failed to initialize Google Cloud Vision:', error);
+  throw new Error('Google Cloud Vision client initialization failed');
+}
+
+// Common date formats found in invoices - enhanced for handwritten content
 const dateFormats = [
   'dd/MM/yyyy',
   'MM/dd/yyyy',
@@ -21,18 +61,28 @@ const dateFormats = [
   'MM-dd-yy',
   'dd.MM.yy',
   'MM.dd.yy',
-  // Add more formats as needed
+  // Additional formats for single-digit days/months (common in handwriting)
+  'd/M/yyyy',
+  'M/d/yyyy',
+  'd/MM/yyyy',
+  'dd/M/yyyy',
+  'd/M/yy',
+  'M/d/yy',
 ];
 
-// Regex patterns for date extraction
+// Regex patterns for date extraction - enhanced for handwritten content
 const dateRegexPatterns = [
-  /\b(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})\b/g, // dd/MM/yyyy, dd-MM-yyyy, dd.MM.yyyy
-  /\b(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})\b/g, // yyyy/MM/dd, yyyy-MM-dd, yyyy.MM.dd
-  /\b(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2})\b/g,  // dd/MM/yy, dd-MM-yy, dd.MM.yy
+  /\b(\d{1,2})[\/\-\.\s](\d{1,2})[\/\-\.\s](\d{4})\b/g, // More flexible separators including spaces
+  /\b(\d{4})[\/\-\.\s](\d{1,2})[\/\-\.\s](\d{1,2})\b/g,
+  /\b(\d{1,2})[\/\-\.\s](\d{1,2})[\/\-\.\s](\d{2})\b/g,
+  // Additional patterns for handwritten dates
+  /(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})/g, // Flexible spacing around /
+  /(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(20\d{2})/g, // 2020s with flexible spacing
+  /(\d{1,2})\/(\d{1,2})\/(\d{4})/g, // Direct pattern match
 ];
 
 /**
- * Extract text from image using Tesseract OCR with improved settings
+ * Extract text from image using Google Cloud Vision API
  */
 export const extractTextFromImage = async (imagePath: string): Promise<string> => {
   // Validate image first
@@ -41,41 +91,62 @@ export const extractTextFromImage = async (imagePath: string): Promise<string> =
     throw new Error(`Image validation failed: ${validation.error}`);
   }
   
-  console.log(`Processing image: ${path.basename(imagePath)} (${Math.round(validation.fileSize! / 1024)}KB)`);
-  
-  const worker = await createWorker('eng+heb');
+  console.log(`Processing image with Google Vision: ${path.basename(imagePath)} (${Math.round(validation.fileSize! / 1024)}KB)`);
   
   try {
-    // Set better OCR parameters for invoice text
-    await worker.setParameters({
-      tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/.:-אבגדהוזחטיכלמנסעפצקרשתךםןףץ ',
+    // Read the image file
+    const imageBuffer = fs.readFileSync(imagePath);
+    
+    // Perform text detection with language hints
+    const [result] = await visionClient.textDetection({
+      image: {
+        content: imageBuffer,
+      },
+      imageContext: {
+        languageHints: config.googleVision.languageHints,
+      },
     });
     
-    const { data } = await worker.recognize(imagePath);
-    
-    // Log OCR confidence if available
-    if (data.confidence !== undefined) {
-      console.log(`OCR confidence: ${data.confidence}%`);
+    const detections = result.textAnnotations;
+    if (!detections || detections.length === 0) {
+      console.log('No text detected in image');
+      return '';
     }
     
-    console.log(`OCR extracted text: "${data.text}"`);
-    return data.text;
-  } catch (ocrError: any) {
-    // Handle specific OCR errors
-    if (ocrError.message?.includes('Image too small') || ocrError.message?.includes('Line cannot be recognized')) {
-      throw new Error('Image quality too poor for OCR processing - image may be corrupted, too small, or low resolution');
+    // The first detection contains the full text
+    const fullText = detections[0].description || '';
+      // Log confidence if available
+    if (result.fullTextAnnotation?.pages?.[0]?.blocks) {
+      const blocks = result.fullTextAnnotation.pages[0].blocks;
+      const avgConfidence = blocks.reduce((acc, block) => {
+        const blockConfidence = block.confidence || 0;
+        return acc + blockConfidence;
+      }, 0) / blocks.length;
+      
+      console.log(`Vision API confidence: ${Math.round(avgConfidence * 100)}%`);
     }
-    throw new Error(`OCR processing failed: ${ocrError.message || 'Unknown OCR error'}`);
-  } finally {
-    await worker.terminate();
+    
+    console.log(`Vision API extracted text: "${fullText}"`);
+    return fullText;
+  } catch (visionError: any) {
+    // Handle specific Vision API errors
+    if (visionError.code === 3) { // INVALID_ARGUMENT
+      throw new Error('Image format not supported or image corrupted');
+    } else if (visionError.code === 8) { // RESOURCE_EXHAUSTED
+      throw new Error('Vision API quota exceeded. Please try again later');
+    } else if (visionError.code === 14) { // UNAVAILABLE
+      throw new Error('Vision API temporarily unavailable. Please try again later');
+    }
+    
+    throw new Error(`Vision API processing failed: ${visionError.message || 'Unknown Vision API error'}`);
   }
 };
 
 /**
- * Extract text from image using multiple OCR attempts with different settings
+ * Extract text from image using multiple Vision API detection methods with different settings
  */
 export const extractTextWithFallback = async (imagePath: string): Promise<string> => {
-  console.log('Attempting OCR with multiple settings...');
+  console.log('Attempting Vision API with multiple detection methods...');
   
   // Validate image first
   const validation = await validateImageFile(imagePath);
@@ -83,47 +154,72 @@ export const extractTextWithFallback = async (imagePath: string): Promise<string
     throw new Error(`Image validation failed: ${validation.error}`);
   }
   
-  // First attempt: Standard settings
-  try {
-    const text1 = await extractTextFromImage(imagePath);
-    if (text1.length > 10) { // If we got decent amount of text
-      console.log('OCR successful with standard settings');
-      return text1;
-    }
-    console.log('Standard OCR returned minimal text, trying fallback...');
-  } catch (error: any) {
-    console.log('First OCR attempt failed:', error.message);
-    
-    // If image quality issue, don't try fallback
-    if (error.message.includes('Image quality too poor') || 
-        error.message.includes('Image too small') ||
-        error.message.includes('corrupted')) {
-      throw error; // Re-throw image quality errors
-    }
-  }
+  const imageBuffer = fs.readFileSync(imagePath);
   
-  // Second attempt: Different settings, but only if image seems valid
-  console.log('Attempting OCR with fallback settings...');
-  const worker = await createWorker('eng+heb');
+  // First attempt: Standard text detection
   try {
-    // Try with more permissive settings
-    await worker.setParameters({
-      tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/.:-אבגדהוזחטיכלמנסעפצקרשתךםןףץ (),[]{}',
+    console.log('Attempting standard text detection...');
+    const [result] = await visionClient.textDetection({
+      image: { content: imageBuffer },
+      imageContext: {
+        languageHints: config.googleVision.languageHints,
+      },
     });
     
-    const { data } = await worker.recognize(imagePath);
-    console.log(`OCR fallback extracted text: "${data.text}"`);
-    return data.text;
-  } catch (fallbackError: any) {
-    console.log('Fallback OCR also failed:', fallbackError.message);
-    throw new Error(`All OCR attempts failed. Image may be corrupted, too low quality, or contain no readable text. Last error: ${fallbackError.message}`);
-  } finally {
-    await worker.terminate();
+    const text = result.textAnnotations?.[0]?.description || '';
+    if (text.length > 5) {
+      console.log('Standard text detection successful');
+      return text;
+    }
+    console.log('Standard text detection returned minimal text, trying document text detection...');
+  } catch (error: any) {
+    console.log('Standard text detection failed:', error.message);
+  }
+  
+  // Second attempt: Document text detection (better for structured documents)
+  try {
+    console.log('Attempting document text detection...');
+    const [result] = await visionClient.documentTextDetection({
+      image: { content: imageBuffer },
+      imageContext: {
+        languageHints: config.googleVision.languageHints,
+      },
+    });
+    
+    const text = result.fullTextAnnotation?.text || '';
+    if (text.length > 0) {
+      console.log('Document text detection successful');
+      return text;
+    }
+    console.log('Document text detection returned no text, trying with enhanced settings...');
+  } catch (error: any) {
+    console.log('Document text detection failed:', error.message);
+  }
+  
+  // Third attempt: Text detection with enhanced image context
+  try {
+    console.log('Attempting enhanced text detection...');
+    const [result] = await visionClient.textDetection({
+      image: { content: imageBuffer },
+      imageContext: {
+        languageHints: ['en', 'he', 'ar', 'und'], // Add undefined language
+        textDetectionParams: {
+          enableTextDetectionConfidenceScore: true,
+        },
+      },
+    });
+    
+    const text = result.textAnnotations?.[0]?.description || '';
+    console.log(`Enhanced text detection result: "${text}"`);
+    return text;
+  } catch (finalError: any) {
+    console.log('All Vision API detection methods failed:', finalError.message);
+    throw new Error(`All Vision API detection methods failed. The image content may be too unclear to read. Last error: ${finalError.message}`);
   }
 };
 
 /**
- * Extract dates from OCR text using multiple approaches
+ * Enhanced date extraction for handwritten and mixed-language content
  */
 export const extractDatesFromText = (text: string): Date[] => {
   const extractedDates: Date[] = [];
@@ -131,7 +227,7 @@ export const extractDatesFromText = (text: string): Date[] => {
   
   console.log(`Extracting dates from text: "${text}"`);
   
-  // Method 1: Use regex patterns to find date-like strings
+  // Method 1: Enhanced regex patterns for handwritten dates
   for (const pattern of dateRegexPatterns) {
     const matches = Array.from(text.matchAll(pattern));
     console.log(`Pattern ${pattern.source} found ${matches.length} matches`);
@@ -140,17 +236,20 @@ export const extractDatesFromText = (text: string): Date[] => {
       const fullMatch = match[0];
       console.log(`Processing match: "${fullMatch}"`);
       
-      // Try to parse the matched date string
+      // Clean up the match (normalize separators and spacing)
+      const cleanMatch = fullMatch.replace(/\s+/g, '/').replace(/[\-\.]/g, '/');
+      console.log(`Cleaned match: "${cleanMatch}"`);
+      
+      // Try to parse with various formats
       for (const format of dateFormats) {
         try {
-          const date = parse(fullMatch, format, new Date());
+          const date = parse(cleanMatch, format, new Date());
           if (isValid(date)) {
-            // Only accept dates from reasonable years (1900-2030)
             const year = date.getFullYear();
             if (year >= 1900 && year <= 2030) {
-              console.log(`Valid date found: ${date.toISOString()} using format ${format}`);
+              console.log(`Valid date found: ${date.toISOString()} using format ${format} from "${cleanMatch}"`);
               extractedDates.push(date);
-              break; // Found valid date, no need to try other formats
+              break;
             }
           }
         } catch (error) {
@@ -160,41 +259,85 @@ export const extractDatesFromText = (text: string): Date[] => {
     }
   }
   
-  // Method 2: Try to find dates in individual words
-  const words = text.split(/\s+/);
-  for (const word of words) {
-    // Skip very short words that can't be dates
-    if (word.length < 6) continue;
+  // Method 2: Look for number sequences that might be dates (more aggressive)
+  const numberSequences = text.match(/\d+[\/\-\.\s]*\d+[\/\-\.\s]*\d+/g) || [];
+  console.log(`Found ${numberSequences.length} potential date sequences:`, numberSequences);
+  
+  for (const sequence of numberSequences) {
+    const cleanSequence = sequence.replace(/\s+/g, '/').replace(/[\-\.]/g, '/');
+    console.log(`Trying to parse sequence: "${cleanSequence}"`);
     
-    for (const format of dateFormats) {
-      try {
-        const date = parse(word, format, new Date());
-        if (isValid(date)) {
-          const year = date.getFullYear();
-          if (year >= 1900 && year <= 2030) {
-            console.log(`Valid date found from word "${word}": ${date.toISOString()}`);
-            extractedDates.push(date);
+    // Try various interpretations with leading zeros
+    const interpretations = [
+      cleanSequence,
+      cleanSequence.replace(/^(\d)\//, '0$1/'), // Add leading zero to day
+      cleanSequence.replace(/\/(\d)\//, '/0$1/'), // Add leading zero to month
+      cleanSequence.replace(/\/(\d)$/, '/0$1'), // Add leading zero to last part
+      // Handle the specific case like "13/6/2025"
+      cleanSequence.replace(/(\d{1,2})\/(\d{1})\/(\d{4})/, '$1/0$2/$3'), // 13/6/2025 -> 13/06/2025
+      cleanSequence.replace(/(\d{1})\/(\d{1,2})\/(\d{4})/, '0$1/$2/$3'), // 3/16/2025 -> 03/16/2025
+    ];
+    
+    for (const interpretation of interpretations) {
+      console.log(`  Trying interpretation: "${interpretation}"`);
+      
+      for (const format of dateFormats) {
+        try {
+          const date = parse(interpretation, format, new Date());
+          if (isValid(date)) {
+            const year = date.getFullYear();
+            if (year >= 1900 && year <= 2030) {
+              console.log(`Valid date found from sequence: ${date.toISOString()} using format ${format} from "${interpretation}"`);
+              extractedDates.push(date);
+              break;
+            }
           }
+        } catch (error) {
+          // Skip invalid formats
         }
-      } catch (error) {
-        // Just skip if not a valid date
       }
     }
   }
   
-  // Method 3: Try ISO date format
-  const isoDateRegex = /\d{4}-\d{2}-\d{2}/g;
-  const isoMatches = text.match(isoDateRegex) || [];
+  // Method 3: Try to find specific pattern "dd/m/yyyy" or "d/mm/yyyy" directly
+  const specificPatterns = [
+    /(\d{1,2})\/(\d{1,2})\/(\d{4})/g,
+    /(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})/g,
+  ];
   
-  for (const match of isoMatches) {
-    try {
-      const date = parseISO(match);
-      if (isValid(date)) {
-        console.log(`Valid ISO date found: ${date.toISOString()}`);
-        extractedDates.push(date);
+  for (const pattern of specificPatterns) {
+    const matches = Array.from(text.matchAll(pattern));
+    console.log(`Specific pattern ${pattern.source} found ${matches.length} matches`);
+    
+    for (const match of matches) {
+      const day = match[1];
+      const month = match[2];
+      const year = match[3];
+      
+      console.log(`Found potential date parts: day=${day}, month=${month}, year=${year}`);
+      
+      // Try both dd/MM/yyyy and MM/dd/yyyy interpretations
+      const dateStrings = [
+        `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`, // dd/MM/yyyy
+        `${month.padStart(2, '0')}/${day.padStart(2, '0')}/${year}`, // MM/dd/yyyy
+      ];
+      
+      for (const dateStr of dateStrings) {
+        for (const format of ['dd/MM/yyyy', 'MM/dd/yyyy']) {
+          try {
+            const date = parse(dateStr, format, new Date());
+            if (isValid(date)) {
+              const yearParsed = date.getFullYear();
+              if (yearParsed >= 1900 && yearParsed <= 2030) {
+                console.log(`Valid date found from parts: ${date.toISOString()} using format ${format} from "${dateStr}"`);
+                extractedDates.push(date);
+              }
+            }
+          } catch (error) {
+            // Skip invalid formats
+          }
+        }
       }
-    } catch (error) {
-      // Skip invalid dates
     }
   }
   
@@ -204,6 +347,10 @@ export const extractDatesFromText = (text: string): Date[] => {
   ).map(dateStr => new Date(dateStr));
   
   console.log(`Total unique dates extracted: ${uniqueDates.length}`);
+  uniqueDates.forEach(date => {
+    console.log(`- ${date.toLocaleDateString()} (${date.toISOString()})`);
+  });
+  
   return uniqueDates;
 };
 
@@ -260,10 +407,10 @@ export const datesMatch = (date1: Date, date2: Date): boolean => {
 };
 
 /**
- * Process an image and determine warranty status based on date validation
+ * Process an image and determine warranty status based on date validation using Google Cloud Vision API
  * Returns APPROVED if invoice date is within ±21 days of installation date
  * Returns REJECTED if date is out of range
- * Returns IN_PROGRESS if OCR parsing failed or no dates found
+ * Returns IN_PROGRESS if Vision API parsing failed or no dates found
  */
 export const validateWarrantyByOCR = async (
   imagePath: string,
@@ -275,12 +422,11 @@ export const validateWarrantyByOCR = async (
   matchingDate?: Date;
   daysDifference?: number;
   error?: string;
-}> => {
-  try {    console.log(`Starting OCR validation for installation date: ${installationDate.toISOString()}`);
+}> => {  try {    console.log(`Starting Vision API validation for installation date: ${installationDate.toISOString()}`);
     
     // Extract text from image using fallback method
     const ocrText = await extractTextWithFallback(imagePath);
-    console.log(`OCR text extracted (length: ${ocrText.length})`);
+    console.log(`Vision API text extracted (length: ${ocrText.length})`);
     
     // If we still have very little text, it might be a poor quality image
     if (ocrText.length < 5) {
@@ -295,12 +441,12 @@ export const validateWarrantyByOCR = async (
     
     // Extract dates from text
     const extractedDates = extractDatesFromText(ocrText);
-    console.log(`Extracted ${extractedDates.length} dates from OCR text:`, extractedDates.map(d => d.toISOString()));
+    console.log(`Extracted ${extractedDates.length} dates from Vision API text:`, extractedDates.map(d => d.toISOString()));
     
     // Validate date range
     const validation = validateInvoiceDateRange(installationDate, extractedDates);
     
-    console.log(`OCR validation result: ${validation.status}`, {
+    console.log(`Vision API validation result: ${validation.status}`, {
       matchingDate: validation.matchingDate?.toISOString(),
       daysDifference: validation.daysDifference
     });
@@ -312,21 +458,26 @@ export const validateWarrantyByOCR = async (
       matchingDate: validation.matchingDate,
       daysDifference: validation.daysDifference
     };  } catch (error: any) {
-    console.error('Error during OCR validation:', error.message || error);
+    console.error('Error during Vision API validation:', error.message || error);
     
     // Provide specific error messages for different failure types
-    let errorMessage = 'Unknown OCR error';
+    let errorMessage = 'Unknown Vision API error';
     
     if (error.message?.includes('Image validation failed')) {
       errorMessage = error.message;
     } else if (error.message?.includes('Image quality too poor') || 
                error.message?.includes('Image too small') || 
-               error.message?.includes('corrupted')) {
+               error.message?.includes('corrupted') ||
+               error.message?.includes('Image format not supported')) {
       errorMessage = 'Image quality too poor for processing - please upload a clearer, higher resolution image';
-    } else if (error.message?.includes('All OCR attempts failed')) {
-      errorMessage = 'Unable to extract text from image - please check image quality and try again';
+    } else if (error.message?.includes('All Vision API detection methods failed')) {
+      errorMessage = 'Unable to extract text from image using Vision API - please check image quality and try again';
+    } else if (error.message?.includes('quota exceeded')) {
+      errorMessage = 'Vision API quota exceeded - please try again later';
+    } else if (error.message?.includes('temporarily unavailable')) {
+      errorMessage = 'Vision API temporarily unavailable - please try again later';
     } else {
-      errorMessage = `OCR processing failed: ${error.message || 'Unknown error'}`;
+      errorMessage = `Vision API processing failed: ${error.message || 'Unknown error'}`;
     }
     
     return {

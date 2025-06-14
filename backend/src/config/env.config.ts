@@ -21,12 +21,15 @@ export default {
   environment: process.env.NODE_ENV || 'development',
   database: {
     url: process.env.DATABASE_URL,
-  },
-  cloudinary: {
+  },  cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
     apiKey: process.env.CLOUDINARY_API_KEY || '',
     apiSecret: process.env.CLOUDINARY_API_SECRET || '',
     folder: process.env.CLOUDINARY_FOLDER || 'warranties',
+  },  googleVision: {
+    keyFilePath: process.env.GOOGLE_VISION_KEY_FILE_PATH || '', // Can be file path or base64-encoded JSON
+    projectId: process.env.GOOGLE_CLOUD_PROJECT_ID || '',
+    languageHints: ['en', 'he', 'ar'], // English, Hebrew, Arabic
   },
   tempDir: path.resolve(__dirname, '../../temp'),
 };

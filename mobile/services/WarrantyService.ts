@@ -31,19 +31,16 @@ export const WarrantyService = {
       const response = await ApiService.getWithAuth(endpoint);
       
       if (response.success) {
+        console.log(response.data);
         return {
           warranties: response.data.map((item: any) => ({
             id: item.id,
             clientName: item.clientName,
-            productInfo: item.productInfo,
-            installationDate: item.installationDate,
+            productInfo: item.productSN,
+            installationDate: item.installDate,
             submissionDate: item.createdAt,
             status: item.status.toLowerCase(),
-            invoiceFile: item.invoiceUrl ? {
-              type: 'image',
-              uri: item.invoiceUrl,
-              name: 'invoice.jpg',
-            } : undefined,
+            invoiceUrl:item. imageUrl
           })),
           pagination: response.pagination
         };
