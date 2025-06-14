@@ -15,9 +15,5 @@ export interface WarrantyRequest {
   installationDate: string;
   submissionDate: string;
   status: 'pending' | 'approved' | 'rejected' | 'in_progress';
-  invoiceFile?: {
-    type: 'image' | 'document';
-    uri: string;
-    name: string;
-  };
+  invoiceUrl?: string; // Optional field for invoice URL
 }

@@ -121,11 +121,7 @@ export const WarrantyService = {
           installationDate: response.data.installationDate,
           submissionDate: response.data.createdAt,
           status: response.data.status.toLowerCase(),
-          invoiceFile: response.data.invoiceUrl ? {
-            type: 'image',
-            uri: response.data.invoiceUrl,
-            name: 'invoice.jpg',
-          } : undefined,
+          invoiceUrl: response.data.imageUrl
         };
       }
       
@@ -153,11 +149,7 @@ export const WarrantyService = {
           installationDate: response.data.installationDate,
           submissionDate: response.data.createdAt,
           status: response.data.status.toLowerCase(),
-          invoiceFile: response.data.invoiceUrl ? {
-            type: 'image',
-            uri: response.data.invoiceUrl,
-            name: 'invoice.jpg',
-          } : undefined,
+          invoiceUrl: response.data.imageUrl
         };
       }      throw new Error(response.message || 'Failed to fetch warranty details');
     } catch (error) {

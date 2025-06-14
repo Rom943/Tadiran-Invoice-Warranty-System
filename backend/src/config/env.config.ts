@@ -8,13 +8,12 @@ export default {
   jwt: {
     secret: process.env.JWT_SECRET || 'default_jwt_secret_key',
     expiresIn: process.env.JWT_EXPIRES_IN || '24h',
-  },
-  cookie: {
+  },  cookie: {
     secret: process.env.COOKIE_SECRET || 'default_cookie_secret',
     options: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict' as const,
+      sameSite: 'lax' as const, // Changed from 'strict' to 'lax' to allow cross-origin requests
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
   },

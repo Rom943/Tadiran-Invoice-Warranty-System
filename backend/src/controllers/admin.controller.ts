@@ -176,7 +176,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         id: user.id,
         email: user.email,
         name: user.name,
-        token: token //for testing purposes, you might not want to return the token in production
+       
       }
     });
   } catch (error) {
@@ -345,5 +345,202 @@ export const checkSession = (req: Request, res: Response): void => {
       success: false,
       message: 'Invalid or expired session'
     });
+  }
+};
+
+/**
+ * @swagger
+ * /api/admin/installers:
+ *   get:
+ *     summary: Get all installer users
+ *     description: Get all installer users (admin only)
+ *     tags: [Admin, Installer]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of installer users
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized
+ */
+export const getInstallerUsers = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    // Get installer users with pagination
+    const installers = await prisma.installerUser.findMany({
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: 'desc'
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true,
+        registrationKey: {
+          select: {
+            key: true,
+            createdAt: true
+          }
+        },
+        _count: {
+          select: {
+            warranties: true
+          }
+        }
+      }
+    });
+
+    // Get total count for pagination
+    const total = await prisma.installerUser.count();
+
+    // Return success response
+    res.status(200).json({
+      success: true,
+      data: installers,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    errorHandler(res, error);
+  }
+};
+
+/**
+ * @swagger
+ * /api/admin/installers/{installerId}/warranties:
+ *   get:
+ *     summary: Get warranties by installer ID
+ *     description: Get all warranties for a specific installer user (admin only)
+ *     tags: [Admin, Installer, Warranty]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: installerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The installer user ID
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, APPROVED, REJECTED, IN_PROGRESS]
+ *         description: Filter warranties by status
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of warranties for the installer
+ *       400:
+ *         description: Invalid installer ID
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized
+ *       404:
+ *         description: Installer not found
+ */
+export const getWarrantiesByInstaller = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { installerId } = req.params;
+    const { status } = req.query;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    // Check if installer exists
+    const installer = await prisma.installerUser.findUnique({
+      where: { id: installerId },
+      select: {
+        id: true,
+        email: true,
+        name: true
+      }
+    });
+
+    if (!installer) {
+      throw new ApiError('Installer not found', 404);
+    }
+
+    // Build query filters
+    const where = {
+      installerId,
+      ...(status ? { status: status as any } : {})
+    };
+
+    // Get warranties with pagination
+    const warranties = await prisma.warranty.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: 'desc'
+      },
+      include: {
+        adminUser: {
+          select: {
+            id: true,
+            email: true,
+            name: true
+          }
+        }
+      }
+    });
+
+    // Get total count for pagination
+    const total = await prisma.warranty.count({ where });
+
+    // Return success response
+    res.status(200).json({
+      success: true,
+      data: {
+        installer,
+        warranties
+      },
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    errorHandler(res, error);
   }
 };

@@ -170,4 +170,84 @@ router.post('/logout', adminController.logout);
  */
 router.get('/check-session', authenticate, requireAdmin, adminController.checkSession);
 
+/**
+ * @swagger
+ * /api/admin/installers:
+ *   get:
+ *     summary: Get all installer users
+ *     description: Get all installer users (admin only)
+ *     tags: [Admin, Installer]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of installer users
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized
+ */
+router.get('/installers', authenticate, requireAdmin, adminController.getInstallerUsers);
+
+/**
+ * @swagger
+ * /api/admin/installers/{installerId}/warranties:
+ *   get:
+ *     summary: Get warranties by installer ID
+ *     description: Get all warranties for a specific installer user (admin only)
+ *     tags: [Admin, Installer, Warranty]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: installerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The installer user ID
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, APPROVED, REJECTED, IN_PROGRESS]
+ *         description: Filter warranties by status
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of warranties for the installer
+ *       400:
+ *         description: Invalid installer ID
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized
+ *       404:
+ *         description: Installer not found
+ */
+router.get('/installers/:installerId/warranties', authenticate, requireAdmin, adminController.getWarrantiesByInstaller);
+
 export default router;

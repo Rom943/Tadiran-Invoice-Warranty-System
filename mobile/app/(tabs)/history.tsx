@@ -4,6 +4,7 @@ import { Colors } from '../../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { WarrantyService } from '../../services/WarrantyService';
 import { WarrantyRequest } from '../../types';
+import WarrantyDetailsModal from '../../components/WarrantyDetailsModal';
 
 export default function WarrantyHistoryScreen() {
   const [warranties, setWarranties] = useState<WarrantyRequest[]>([]);
@@ -11,6 +12,10 @@ export default function WarrantyHistoryScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Modal state
+  const [selectedWarranty, setSelectedWarranty] = useState<WarrantyRequest | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Load warranty data on component mount
   useEffect(() => {
@@ -159,22 +164,15 @@ export default function WarrantyHistoryScreen() {
             <Ionicons name="time-outline" size={18} color={Colors.dark.text} />
             <Text style={styles.infoText}>נשלח : {new Date(item.submissionDate).toLocaleDateString()}</Text>
           </View>
-        </View>
-        <TouchableOpacity
-        style={styles.detailsButton}
-        onPress={() => {
-          Alert.alert(
-            'פרטי אחריות',
-            `לקוח: ${item.clientName}\n` +
-            `מוצר: ${item.productInfo}\n` +
-            `תאריך התקנה: ${new Date(item.installationDate).toLocaleDateString()}\n` +
-            `תאריך שליחת הטופס: ${new Date(item.submissionDate).toLocaleDateString()}\n` +
-            `סטאטוס: ${renderStatusText(item.status)}`,
-            [{ text: 'סגור', style: 'cancel' }]
-          );
-        }}>
-        <Text style={styles.detailsButtonText}>הצג פרטים</Text>
-      </TouchableOpacity>
+        </View>        <TouchableOpacity
+          style={styles.detailsButton}
+          onPress={() => {
+            setSelectedWarranty(item);
+            setModalVisible(true);
+          }}
+        >
+          <Text style={styles.detailsButtonText}>הצג פרטים</Text>
+        </TouchableOpacity>
     </View>
   );
 }
@@ -200,7 +198,6 @@ export default function WarrantyHistoryScreen() {
       </View>
     );
   }
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>חשבוניות</Text>
@@ -222,6 +219,16 @@ export default function WarrantyHistoryScreen() {
           onRefresh={handleRefresh}
         />
       )}
+      
+      <WarrantyDetailsModal
+        visible={modalVisible}
+        warranty={selectedWarranty}
+        onClose={() => {
+          setModalVisible(false);
+          setSelectedWarranty(null);
+        }}
+        renderStatusText={renderStatusText}
+      />
     </View>
   );
 }

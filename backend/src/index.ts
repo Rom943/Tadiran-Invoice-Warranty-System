@@ -27,22 +27,24 @@ if (!fs.existsSync(config.tempDir)) {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // For parsing form data
 app.use(cookieParser(config.cookie.secret));
-app.use(cors({
-  origin: function(origin, callback) {
+app.use(cors({  origin: function(origin, callback) {
     // Allow requests with no origin 
     // (like mobile apps or curl requests)
     if(!origin) return callback(null, true);
     
-    const allowedOrigins = [,
+    const allowedOrigins = [
+      'http://localhost:5173', // React Admin
+      'http://localhost:3000', // Backend URL
       'http://10.100.102.13:3000',
       'https://tadiran.com'
     ];
     
     if(allowedOrigins.indexOf(origin) === -1){
       console.log(`Origin ${origin} not allowed by CORS`);
+      return callback(null, false);
     }
     
-    return callback(null, true); // Allow all origins for development
+    return callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
