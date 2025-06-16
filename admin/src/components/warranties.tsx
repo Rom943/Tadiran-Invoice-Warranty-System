@@ -1,4 +1,3 @@
-
 import {
   List,
   Datagrid,
@@ -21,9 +20,12 @@ import {
   SearchInput,
   DateInput,
   FunctionField,
-  useRecordContext
+  useRecordContext,
+  useUpdate
 } from 'react-admin';
-import { Card, CardContent, Typography, Box, Chip } from '@mui/material';
+import { Card, CardContent, Typography, Box, Chip, CircularProgress } from '@mui/material';
+
+import { useState } from 'react';
 
 const WarrantyFilters = [
   <SearchInput source="q" alwaysOn />,
@@ -83,6 +85,7 @@ export const WarrantyList = () => (
     sort={{ field: 'createdAt', order: 'DESC' }}
   >
     <Datagrid rowClick="show">
+      <TextField source="id" label="ID" />
       <TextField source="productSN" label="Serial Number" />
       <TextField source="clientName" label="Client" />
       <ReferenceField source="installerId" reference="installers" label="Installer">
@@ -104,6 +107,74 @@ const WarrantyTitle = () => {
   return <span>Warranty {record ? `for ${record.clientName}` : ''}</span>;
 };
 
+// Define a new component for the form fields to isolate useRecordContext
+const WarrantyFormFields = () => {
+    const [loading,setLoading] = useState(false);
+    const record = useRecordContext();
+    const [upadte] = useUpdate();
+    const onSubmit = async (values:any) => {
+        setLoading(true);
+        console.log('Submitting warranty form:', record);
+        try {
+            if (!record || !record.id) {
+                console.error('No record found or record ID is missing');
+                return;
+            }
+            await upadte(
+                'warranties',
+                { id: record.id, data:values}
+            );
+        } catch (error) {
+            console.error('Error updating warranty:', error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+  return (
+    <>
+      <SimpleForm onSubmit={onSubmit}>
+      <Typography variant="subtitle1" gutterBottom>
+        Warranty Details (Read-only)
+      </Typography>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+        <TextInput  source="id" />
+        <TextInput  source="productSN" label="Serial Number" sx={{ flexGrow: 1 }} />
+        <TextInput  source="clientName" label="Client Name" sx={{ flexGrow: 1 }} />
+      </Box>
+      
+      <Typography variant="subtitle1" gutterBottom sx={{ mt: 3 }}>
+        Status Management
+      </Typography>
+      <Box sx={{ bgcolor: 'background.paper', p: 2, borderRadius: 1 }}>
+        <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+          Changing the status will notify the installer of the update
+        </Typography>
+        <SelectInput 
+          source="status" 
+          label="Status"
+          helperText="Select a new status for this warranty"
+          choices={[
+            { id: 'PENDING', name: 'Pending - Awaiting Review' },
+            { id: 'IN_PROGRESS', name: 'In Progress - Under Review' },
+            { id: 'APPROVED', name: 'Approved - Warranty Active' },
+            { id: 'REJECTED', name: 'Rejected - Warranty Denied' },
+          ]}
+        />
+      </Box>
+      
+      <Typography variant="subtitle1" gutterBottom sx={{ mt: 3 }}>
+        Installer Information
+      </Typography>
+      <ReferenceField source="installerId" reference="installers" label="Installer">
+        <TextField source="name" />
+      </ReferenceField>
+      {loading && <CircularProgress size={24} sx={{ mt: 2 }} />}
+      </SimpleForm>
+    </>
+  );
+};
+
 export const WarrantyEdit = () => {
   const notify = useNotify();
   const redirect = useRedirect();
@@ -115,63 +186,18 @@ export const WarrantyEdit = () => {
     refresh();
   };
 
-  const onError = (error: Error) => {
+  const onError = (error: Error) =>{
     notify(`Error: ${error.message}`, { type: 'error' });
-  };
+  };  
 
-  // Transform the data before sending to the API to match the backend
-  // In our case, we're focusing specifically on status updates
-  const transform = (data: any) => {
-    console.log('Transforming warranty update data:', data);
-    // Keep only the fields we want to update
-    return {
-      status: data.status,
-    };
-  };
-
+  // The <Edit> component fetches the record and provides it via RecordContext.
+  // SimpleForm and its children (like WarrantyFormFields) consume this context.
   return (
     <Edit 
       title={<WarrantyTitle />} 
-      mutationOptions={{ onSuccess, onError }}
-      transform={transform}
+      mutationOptions={{ onSuccess, onError}}
     >
-      <SimpleForm>
-        <Typography variant="subtitle1" gutterBottom>
-          Warranty Details (Read-only)
-        </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-          <TextInput disabled source="id" />
-          <TextInput disabled source="productSN" label="Serial Number" sx={{ flexGrow: 1 }} />
-          <TextInput disabled source="clientName" label="Client Name" sx={{ flexGrow: 1 }} />
-        </Box>
-        
-        <Typography variant="subtitle1" gutterBottom sx={{ mt: 3 }}>
-          Status Management
-        </Typography>
-        <Box sx={{ bgcolor: 'background.paper', p: 2, borderRadius: 1 }}>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-            Changing the status will notify the installer of the update
-          </Typography>
-          <SelectInput 
-            source="status" 
-            label="Status"
-            helperText="Select a new status for this warranty"
-            choices={[
-              { id: 'PENDING', name: 'Pending - Awaiting Review' },
-              { id: 'IN_PROGRESS', name: 'In Progress - Under Review' },
-              { id: 'APPROVED', name: 'Approved - Warranty Active' },
-              { id: 'REJECTED', name: 'Rejected - Warranty Denied' },
-            ]}
-          />
-        </Box>
-        
-        <Typography variant="subtitle1" gutterBottom sx={{ mt: 3 }}>
-          Installer Information
-        </Typography>
-        <ReferenceField source="installerId" reference="installers" label="Installer">
-          <TextField source="name" />
-        </ReferenceField>
-      </SimpleForm>
+        <WarrantyFormFields />
     </Edit>
   );
 };
@@ -270,9 +296,8 @@ export const WarrantyShow = () => (
           />
         </CardContent>
       </Card>
-      
-      <Box display="flex" justifyContent="center" mt={2}>
-        <EditButton label="Update Status" />
+        <Box display="flex" justifyContent="center" gap={2} mt={2}>
+        <EditButton label="Edit Details" />
       </Box>
     </SimpleShowLayout>
   </Show>

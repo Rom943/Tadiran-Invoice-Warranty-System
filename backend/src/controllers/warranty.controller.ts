@@ -7,6 +7,7 @@ import { validateWarrantyByOCR } from '../services/ocr.service';
 import fs from 'fs';
 import path from 'path';
 import config from '../config/env.config'; // Added import for config
+import { connect } from 'http2';
 
 const prisma = new PrismaClient();
 
@@ -199,7 +200,7 @@ export const createWarranty = async (req: Request, res: Response): Promise<void>
  *               productSN:
  *                 type: string
  *                 description: Product serial number
- *               clietnName:
+ *               clientName:
  *                 type: string
  *                 description: Client name
  *               installDate:
@@ -227,35 +228,43 @@ export const updateWarranty = async (req: Request, res: Response): Promise<void>
     if (!req.user) {
       throw new ApiError('Not authenticated', 401);
     }
-
+    console.log(req.user);
     const { id } = req.params;
-    const { productSN, clietnName, installDate, imageUrl } = req.body;
-
+    const { productSN, clientName, installDate, imageUrl,status} = req.body;
     // Check if warranty exists
     const existingWarranty = await prisma.warranty.findUnique({
       where: { id }
     });
-
     if (!existingWarranty) {
       throw new ApiError('Warranty not found', 404);
     }
-
     // Check authorization (admin or warranty owner)
     if (req.user.userType !== 'admin' && existingWarranty.installerId !== req.user.userId) {
       throw new ApiError('Not authorized to update this warranty', 403);
     }
-
     // Prepare update data
-    const updateData: any = {};
+    let updateData: any = {};
     if (productSN !== undefined) updateData.productSN = productSN;
-    if (clietnName !== undefined) updateData.clietnName = clietnName;
+    if (clientName !== undefined) updateData.clientName = clientName;
     if (installDate !== undefined) updateData.installDate = new Date(installDate);
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
-
+    if (status !== undefined) {
+      const validStatuses = ['PENDING', 'APPROVED', 'REJECTED', 'IN_PROGRESS'];
+      if (!validStatuses.includes(status)) {
+        throw new ApiError('Invalid status value', 400);
+      }
+      updateData.status = status;
+    }
     // Update warranty
     const warranty = await prisma.warranty.update({
       where: { id },
-      data: updateData
+      data: {...updateData,
+        adminUser:{
+          connect:{
+            id:  req.body.adminUserId// Use provided adminUserId or current user
+          }
+        }
+      }
     });
 
     // Return success response

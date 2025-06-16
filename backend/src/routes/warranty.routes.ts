@@ -228,8 +228,53 @@ router.put('/:id', [
  *         description: Not authorized
  *       404:
  *         description: Warranty not found
+ *   put:
+ *     summary: Update warranty status (alternative for PATCH)
+ *     description: Update warranty status using PUT method (admin only)
+ *     tags: [Warranty]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Warranty ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [PENDING, APPROVED, REJECTED, IN_PROGRESS]
+ *                 description: New warranty status
+ *     responses:
+ *       200:
+ *         description: Warranty status updated successfully
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized
+ *       404:
+ *         description: Warranty not found
  */
 router.patch('/:id/status', [
+  authenticate,
+  requireAdmin,
+  param('id').isString().withMessage('Invalid warranty ID'),
+  body('status').isIn(['PENDING', 'APPROVED', 'REJECTED', 'IN_PROGRESS']).withMessage('Invalid status value')
+], warrantyController.updateWarrantyStatus);
+
+// Add a PUT route for the same endpoint to support React Admin
+router.put('/:id/status', [
   authenticate,
   requireAdmin,
   param('id').isString().withMessage('Invalid warranty ID'),

@@ -1,6 +1,7 @@
 import  { useState, useEffect } from 'react';
-import { useDataProvider, Title, Loading } from 'react-admin';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { useDataProvider, Title, Loading, useAuthenticated } from 'react-admin';
+import { Box, Card, CardContent, Typography, Divider } from '@mui/material';
+
 
 interface DashboardStats {
   totalInstallers: number;
@@ -11,7 +12,11 @@ interface DashboardStats {
   inProgressWarranties: number;
 }
 
-export const Dashboard = () => {  const [stats, setStats] = useState<DashboardStats>({
+export const Dashboard = () => {
+  // Use authentication to ensure the user is logged in - must be at the top level
+  useAuthenticated();
+  
+  const [stats, setStats] = useState<DashboardStats>({
     totalInstallers: 0,
     totalWarranties: 0,
     pendingWarranties: 0,
@@ -56,6 +61,7 @@ export const Dashboard = () => {  const [stats, setStats] = useState<DashboardSt
 
     fetchStats();
   }, [dataProvider]);
+  
   if (loading) {
     return <Loading />;
   }
@@ -87,6 +93,8 @@ export const Dashboard = () => {  const [stats, setStats] = useState<DashboardSt
           </Typography>
         </CardContent>
       </Card>
+
+
     </Box>
   );
 };

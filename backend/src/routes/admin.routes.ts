@@ -250,4 +250,36 @@ router.get('/installers', authenticate, requireAdmin, adminController.getInstall
  */
 router.get('/installers/:installerId/warranties', authenticate, requireAdmin, adminController.getWarrantiesByInstaller);
 
+/**
+ * @swagger
+ * /api/admin/admins:
+ *   get:
+ *     summary: Get all admin users
+ *     description: Get all admin users (admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of admin users
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized
+ */
+router.get('/admins', authenticate, requireAdmin, adminController.getAdmins);
+
 export default router;

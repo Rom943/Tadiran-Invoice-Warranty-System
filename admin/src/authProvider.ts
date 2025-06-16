@@ -8,14 +8,12 @@ export const authProvider: AuthProvider = {  // Called when the user attempts to
     try {
       // React-admin uses 'username' for the login field, but our API expects 'email'
       const email = username;
-      console.log('Login attempt with:', { email, password });
+
       if (!email || !password) {
         console.error('Missing credentials:', { email, password });
         return Promise.reject('Email and password are required');
       }
       
-      console.log('Sending login request to:', `${API_URL}/admin/login`);
-      console.log('Request payload:', JSON.stringify({ email, password }));
       
       const response = await fetch(`${API_URL}/admin/login`, {
         method: 'POST',
@@ -26,10 +24,10 @@ export const authProvider: AuthProvider = {  // Called when the user attempts to
         body: JSON.stringify({ email, password }),
       });
       
-      console.log('Login response status:', response.status);
+
       
       const data = await response.json();
-      console.log('Login response data:', data);
+
       
       // Detailed error logging
       if (!response.ok) {
@@ -40,7 +38,7 @@ export const authProvider: AuthProvider = {  // Called when the user attempts to
       }
       
       if (data.success) {
-        console.log('Login successful, storing admin data:', data.data);
+
         // Store user info in localStorage
         localStorage.setItem('admin', JSON.stringify(data.data));
         return Promise.resolve();
@@ -81,17 +79,15 @@ export const authProvider: AuthProvider = {  // Called when the user attempts to
   // Called when the user navigates to a new location, to check for authentication
   checkAuth: async () => {
     try {
-      console.log('Checking authentication...');
+
       const response = await fetch(`${API_URL}/admin/check-session`, {
         method: 'GET',
         credentials: 'include',
       });
 
-      console.log('Check session response:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Check session data:', data);
         if (data.success) {
           return Promise.resolve();
         }

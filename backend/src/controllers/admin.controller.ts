@@ -51,6 +51,8 @@ const prisma = new PrismaClient();
  *         description: Email already exists
  */
 export const register = async (req: Request, res: Response): Promise<void> => {
+  console.log('Registering new admin user...');
+  console.log('Request body:', req.body);
   try {
     // Validate request
     const errors = validationResult(req);
@@ -533,6 +535,76 @@ export const getWarrantiesByInstaller = async (req: Request, res: Response): Pro
         installer,
         warranties
       },
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    errorHandler(res, error);
+  }
+};
+
+/**
+ * @swagger
+ * /api/admin/admins:
+ *   get:
+ *     summary: Get all admin users
+ *     description: Get all admin users (admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of admin users
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized
+ */
+export const getAdmins = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    // Get admin users with pagination
+    const admins = await prisma.adminUser.findMany({
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: 'desc'
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        createdAt: true
+      }
+    });
+
+    // Get total count for pagination
+    const total = await prisma.adminUser.count();
+
+    // Return success response
+    res.status(200).json({
+      success: true,
+      data: admins,
       pagination: {
         total,
         page,
