@@ -24,7 +24,7 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <Image
-        source={require('../assets/images/icon.png')} // Use your Tadiran logo here
+        source={require("../assets/images/tadiran-logo.png")} // Use your Tadiran logo here
         style={styles.logo}
         resizeMode="contain"
       />

@@ -286,26 +286,6 @@ export default function WarrantyFormScreen() {  // Form state
 
   return (
     <ScrollView style={styles.container}>
-      {notification && (
-        <View 
-          style={[
-            styles.notification,
-            notification.type === 'success' ? styles.successNotification :
-            notification.type === 'error' ? styles.errorNotification : 
-            styles.infoNotification
-          ]}
-        >
-          <Text style={styles.notificationText}>{notification.message}</Text>
-          <TouchableOpacity 
-            style={styles.notificationClose} 
-            onPress={() => setNotification(null)}
-          >
-            <Ionicons name="close" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      )}
-      
-      <Text style={styles.title}>תופס העלאת חשבונית</Text>
       
       <View style={styles.formSection}>
         <Text style={styles.sectionTitle}>נתוני הלקוח</Text>
@@ -410,6 +390,24 @@ export default function WarrantyFormScreen() {  // Form state
         onPress={handleSubmit}
         disabled={isSubmitting}
       >
+              {notification && (
+        <View 
+          style={[
+            styles.notification,
+            notification.type === 'success' ? styles.successNotification :
+            notification.type === 'error' ? styles.errorNotification : 
+            styles.infoNotification
+          ]}
+        >
+          <Text style={styles.notificationText}>{notification.message}</Text>
+          <TouchableOpacity 
+            style={styles.notificationClose} 
+            onPress={() => setNotification(null)}
+          >
+            <Ionicons name="close" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      )}
         {isSubmitting ? (
           <ActivityIndicator size="small" color="#fff" />
         ) : (

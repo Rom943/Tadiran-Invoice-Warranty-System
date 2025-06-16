@@ -200,7 +200,6 @@ export default function WarrantyHistoryScreen() {
   }
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>חשבוניות</Text>
       
       {renderFilterTabs()}      
       {filteredWarranties.length === 0 ? (

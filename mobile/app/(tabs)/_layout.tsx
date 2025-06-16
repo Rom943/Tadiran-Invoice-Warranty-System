@@ -1,9 +1,9 @@
-import React from 'react';
-import { Tabs, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../constants/Colors';
-import { TouchableOpacity } from 'react-native';
-import { useAuth } from '../../context/AuthContext';
+import React from "react";
+import { Tabs, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "../../constants/Colors";
+import { TouchableOpacity } from "react-native";
+import { useAuth } from "../../context/AuthContext";
 
 export default function TabLayout() {
   const { user, logout } = useAuth();
@@ -12,13 +12,13 @@ export default function TabLayout() {
   // Redirect to login if not authenticated
   React.useEffect(() => {
     if (!user) {
-      router.replace('/auth/login');
+      router.replace("/auth/login");
     }
   }, [user]);
 
   const handleLogout = () => {
     logout();
-    router.replace('/');
+    router.replace("/");
   };
 
   return (
@@ -29,15 +29,12 @@ export default function TabLayout() {
         headerStyle: {
           backgroundColor: Colors.dark.primary,
         },
-        headerTintColor: '#fff',
+        headerTintColor: "#fff",
         headerTitleStyle: {
-          fontWeight: 'bold',
+          fontWeight: "bold",
         },
         headerRight: () => (
-          <TouchableOpacity 
-            onPress={handleLogout} 
-            style={{ marginRight: 16 }}
-          >
+          <TouchableOpacity onPress={handleLogout} style={{ marginRight: 16 }}>
             <Ionicons name="log-out-outline" size={24} color="#fff" />
           </TouchableOpacity>
         ),
@@ -46,7 +43,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'העלת טופס',
+          title: "לשלוח חשבונית",
+          headerTitleAlign: 'center',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="document-text" size={size} color={color} />
           ),
@@ -55,7 +53,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="history"
         options={{
-          title: 'רשימת טפסים',
+          title: "חשבוניות שנשלחו",
+          headerTitleAlign: 'center',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="list" size={size} color={color} />
           ),

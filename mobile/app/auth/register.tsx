@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { useAuth } from '../../context/AuthContext';
@@ -66,12 +66,15 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>מערכת אימות אחריות</Text>
-      <Text style={styles.title}>טאדירן</Text>
-      <Text style={styles.subtitle}>צור משתמש מתקין</Text>
-
-      <View style={styles.inputContainer}>
+  <>
+      <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}>
+    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled"> 
+      <Image source={require('../../assets/images/tadiran-logo.png')} style={styles.logo}/>
+      <Text style={styles.title}>טופס הרשמה למתקין</Text>
+      
         <Text style={styles.label}>שם מלא</Text>
         <TextInput
           style={styles.input}
@@ -79,9 +82,9 @@ export default function RegisterScreen() {
           onChangeText={setName}
           placeholder="הקלד שם מלא"
         />
-      </View>
 
-      <View style={styles.inputContainer}>
+
+
         <Text style={styles.label}>אימייל</Text>
         <TextInput
           style={styles.input}
@@ -91,10 +94,10 @@ export default function RegisterScreen() {
           keyboardType="email-address"
           autoCapitalize="none"
         />
-      </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>סיסמא</Text>
+
+
+        <Text style={styles.label}>סיסמה</Text>
         <TextInput
           style={styles.input}
           value={password}
@@ -102,8 +105,9 @@ export default function RegisterScreen() {
           placeholder="הקלד את הסיסמא שלך"
           secureTextEntry
         />
-      </View>      <View style={styles.inputContainer}>
-        <Text style={styles.label}>וידוי סיסמא</Text>
+
+
+        <Text style={styles.label}>ודא סיסמה:</Text>
         <TextInput
           style={styles.input}
           value={confirmPassword}
@@ -111,9 +115,8 @@ export default function RegisterScreen() {
           placeholder="הקלד את הסיסמא שוב"
           secureTextEntry
         />
-      </View>
+  
 
-      <View style={styles.inputContainer}>
         <Text style={styles.label}>קוד הרשמה</Text>
         <TextInput
           style={styles.input}
@@ -122,7 +125,7 @@ export default function RegisterScreen() {
           placeholder="הכנס את קוד ההרשמה שקיבלת"
           autoCapitalize="none"
         />
-      </View>
+
 
       <TouchableOpacity 
         style={styles.button} 
@@ -141,22 +144,24 @@ export default function RegisterScreen() {
           <Text style={styles.link}>התחבר</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
+    </KeyboardAvoidingView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    direction: 'rtl', // Right-to-left layout for Hebrew
-  },
+container: {
+  flexGrow: 1,
+  padding: 20,
+  backgroundColor: '#fff',
+  justifyContent: 'center',
+  direction: 'rtl',
+},
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 25,
     textAlign: 'center',
     color: Colors.dark.primary,
   },
@@ -172,6 +177,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     marginBottom: 8,
+    marginRight: 5,
     color: Colors.dark.text,
   },
   input: {
@@ -180,6 +186,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     fontSize: 16,
+    marginBottom: 10,
   },
   button: {
     backgroundColor: Colors.dark.primary,
@@ -197,6 +204,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 20,
+    height: 200,
   },
   linkText: {
     fontSize: 16,
@@ -207,4 +215,11 @@ const styles = StyleSheet.create({
     color: Colors.dark.primary,
     fontWeight: 'bold',
   },
+  logo:{
+    width: 150,
+    height: 150,
+    alignSelf: 'center',
+    marginBottom: 5,
+    marginTop: 20,
+  }
 });
