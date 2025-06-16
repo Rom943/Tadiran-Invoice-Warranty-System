@@ -11,9 +11,65 @@ import {
   useRefresh,
   FunctionField,
   Button,
-  useCreate
+  useCreate,
+  useDelete,
+  Confirm,
+  useRecordContext
 } from 'react-admin';
 import { Typography } from '@mui/material';
+
+const DeleteKeyButton = () => {
+  const record = useRecordContext();
+  const notify = useNotify();
+  const refresh = useRefresh();
+  const [open, setOpen] = useState(false);
+  const [deleteOne, { isLoading }] = useDelete();
+
+  if (!record) return null;
+
+  const handleDelete = () => {
+    console.log('Deleting registration key:', record);
+    deleteOne(
+      'registrationKeys',
+      { id: record.id },
+      {
+        onSuccess: () => {
+          notify('Registration key deleted', { type: 'success' });
+          refresh();
+        },
+        onError: (error) => {
+          notify(
+             'Could not delete key',
+            { type: 'error' }
+          );
+        },
+      }
+    );
+    setOpen(false);
+  };
+
+  // Only allow delete if not used
+  const isUsed = !!(record.installer?.name || record.installerId);
+  if (isUsed) return null;
+
+  return (
+    <>
+      <Button
+        label="Delete"
+        onClick={() => setOpen(true)}
+        disabled={isLoading}
+        color="error"
+      />
+      <Confirm
+        isOpen={open}
+        title="Delete Registration Key"
+        content="Are you sure you want to delete this unused registration key?"
+        onConfirm={handleDelete}
+        onClose={() => setOpen(false)}
+      />
+    </>
+  );
+};
 
 export const RegistrationKeyList = () => (
   <List title="Registration Keys" sort={{ field: 'createdAt', order: 'DESC' }}>
@@ -34,6 +90,7 @@ export const RegistrationKeyList = () => (
       />
       <DateField source="createdAt" label="Created At" showTime />
       <DateField source="updatedAt" label="Updated At" showTime />
+      <DeleteKeyButton />
     </Datagrid>
   </List>
 );

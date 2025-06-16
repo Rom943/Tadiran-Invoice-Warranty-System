@@ -180,6 +180,7 @@ export const getAllKeys = async (req: Request, res: Response): Promise<void> => 
  *         description: Registration key not found
  */
 export const deleteKey = async (req: Request, res: Response): Promise<void> => {
+  console.log('Delete key request:', req.params);
   try {
     // Check authentication
     if (!req.user || req.user.userType !== 'admin') {

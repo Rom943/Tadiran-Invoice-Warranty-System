@@ -321,7 +321,7 @@ export const dataProvider: DataProvider = {
   },
 
   delete: async (resource, params) => {
-    const url = `${API_URL}/${resource}/${params.id}`;
+    const url = `${API_URL}/keys/${params.id}`;
 
     try {
       await apiRequest(url, { method: "DELETE" });
