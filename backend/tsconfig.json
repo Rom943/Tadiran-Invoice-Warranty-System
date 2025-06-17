@@ -9,7 +9,9 @@
     "skipLibCheck": true,
     "typeRoots": ["./node_modules/@types"],
     "resolveJsonModule": true,
-    "lib": ["es2020"]
+    "lib": ["es2020"],
+    "noEmitOnError": false,
+    "allowJs": true
   },
   "include": ["src"],
   "exclude": ["node_modules"]
