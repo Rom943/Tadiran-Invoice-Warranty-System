@@ -14,8 +14,7 @@ dotenv.config();
 
 const app = express();
 
-// Initialize Prisma client
-const prisma = new PrismaClient();
+
 
 // Ensure temp directory exists
 if (!fs.existsSync(config.tempDir)) {

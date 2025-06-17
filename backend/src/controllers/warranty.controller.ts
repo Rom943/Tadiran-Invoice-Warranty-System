@@ -5,9 +5,7 @@ import { ApiError, errorHandler, formatValidationErrors } from '../utils/error-h
 import { uploadImage } from '../utils/cloudinary';
 import { validateWarrantyByOCR } from '../services/ocr.service';
 import fs from 'fs';
-import path from 'path';
-import config from '../config/env.config'; // Added import for config
-import { connect } from 'http2';
+
 
 const prisma = new PrismaClient();
 

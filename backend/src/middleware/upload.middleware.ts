@@ -3,7 +3,6 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { Request, Response, NextFunction } from 'express';
-import { ApiError } from '../utils/error-handler';
 import config from '../config/env.config';
 
 // Ensure the temp directory exists

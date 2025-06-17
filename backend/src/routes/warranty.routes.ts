@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body, param } from 'express-validator';
 import * as warrantyController from '../controllers/warranty.controller';
-import { authenticate, requireInstaller, requireAdmin, requireAdminOrSpecificInstaller } from '../middleware/auth.middleware';
+import { authenticate, requireInstaller } from '../middleware/auth.middleware';
 import { uploadInvoiceImage } from '../middleware/upload.middleware';
 
 const router = Router();

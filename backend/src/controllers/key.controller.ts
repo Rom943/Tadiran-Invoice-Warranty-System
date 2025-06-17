@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { validationResult } from 'express-validator';
 import { PrismaClient } from '../../generated/prisma';
-import { ApiError, errorHandler, formatValidationErrors } from '../utils/error-handler';
+import { ApiError, errorHandler } from '../utils/error-handler';
 import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();

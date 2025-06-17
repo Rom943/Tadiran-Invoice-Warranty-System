@@ -1,6 +1,6 @@
 // filepath: src/services/ocr.service.ts
 import { ImageAnnotatorClient } from '@google-cloud/vision';
-import { parseISO, isEqual, parse, isValid, differenceInDays } from 'date-fns';
+import {  isEqual, parse, isValid, differenceInDays } from 'date-fns';
 import fs from 'fs';
 import path from 'path';
 import config from '../config/env.config';
