@@ -25,12 +25,16 @@ const handleResponse = async (response: Response) => {
 
 // Helper function for API requests
 const apiRequest = async (url: string, options: any = {}) => {
-  // Default options
-  const defaultOptions = {
-    credentials: "include" as RequestCredentials,
+  const token = localStorage.getItem("token");
+
+  const defaultOptions: any = {
     headers: new Headers({ "Content-Type": "application/json" }),
   };
-  console.log(options);
+
+  if (token) {
+    defaultOptions.headers.set("Authorization", `Bearer ${token}`);
+  }
+
   // Merge options
   const finalOptions = {
     ...defaultOptions,

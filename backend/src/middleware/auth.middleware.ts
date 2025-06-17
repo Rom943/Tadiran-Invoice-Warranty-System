@@ -20,27 +20,31 @@ declare global {
  */
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Get token from cookie
-    const token = req.cookies.token;
+    let token = req.cookies.token;
+
+    if (!token && req.headers.authorization) {
+      const parts = req.headers.authorization.split(' ');
+      if (parts.length === 2 && parts[0] === 'Bearer') {
+        token = parts[1];
+      }
+    }
 
     if (!token) {
       const error = new ApiError('Not authenticated', 401);
-      res.status(error.statusCode).json({
+      return res.status(error.statusCode).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
-      return;
     }
 
     // Verify token
     const decoded = jwtService.verifyToken(token);
     if (!decoded) {
       const error = new ApiError('Invalid or expired token', 401);
-      res.status(error.statusCode).json({
+      return res.status(error.statusCode).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
-      return;
     }
 
     // Add user data to request
@@ -48,15 +52,9 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     next();
   } catch (error) {
     if (error instanceof ApiError) {
-      res.status(error.statusCode).json({
-        success: false,
-        message: error.message
-      });
+      res.status(error.statusCode).json({ success: false, message: error.message });
     } else {
-      res.status(401).json({
-        success: false,
-        message: 'Authentication failed'
-      });
+      res.status(500).json({ success: false, message: 'An unexpected error occurred' });
     }
   }
 };

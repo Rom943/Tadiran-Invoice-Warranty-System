@@ -8,6 +8,7 @@ export const authProvider: AuthProvider = {  // Called when the user attempts to
     try {
       // React-admin uses 'username' for the login field, but our API expects 'email'
       const email = username;
+      console.log('Attempting login for email:', email);
 
       if (!email || !password) {
         console.error('Missing credentials:', { email, password });
@@ -24,30 +25,38 @@ export const authProvider: AuthProvider = {  // Called when the user attempts to
         body: JSON.stringify({ email, password }),
       });
       
-
-      
-      const data = await response.json();
+      console.log('Login response status:', response.status);
+      const responseText = await response.text();
+      console.log('Login response text:', responseText);
 
       
       // Detailed error logging
       if (!response.ok) {
-        const errorMessage = data.message || (data.errors ? JSON.stringify(data.errors) : 'Login failed');
-        console.error('Login failed:', errorMessage);
-        console.error('Response details:', data);
-        throw new Error(errorMessage);
+        console.error('Login request failed with status:', response.status);
+        try {
+            const errorData = JSON.parse(responseText);
+            throw new Error(errorData.message || 'Login failed');
+        } catch(e) {
+            throw new Error(responseText || 'Login failed');
+        }
       }
       
-      if (data.success) {
+      const data = JSON.parse(responseText);
+      console.log('Login response data:', data);
 
+      if (data.success) {
+        console.log('Login successful, setting localStorage...');
         // Store user info in localStorage
         localStorage.setItem('admin', JSON.stringify(data.data));
+        const { token } = data.data;
+        localStorage.setItem('token', token);
         return Promise.resolve();
       } else {
         console.error('Login response indicated failure:', data);
-        return Promise.reject(new Error('Login failed'));
+        return Promise.reject(new Error(data.message || 'Login failed'));
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Caught error in login function:', error);
       return Promise.reject(error);
     }
   },
@@ -77,30 +86,14 @@ export const authProvider: AuthProvider = {  // Called when the user attempts to
   },
 
   // Called when the user navigates to a new location, to check for authentication
-  checkAuth: async () => {
-    try {
-
-      const response = await fetch(`https://tadiran-invoice-warranty-system.onrender.com/api/admin/check-session`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          return Promise.resolve();
+  checkAuth: () => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            return Promise.resolve();
         }
-      }
-      
-      localStorage.removeItem('admin');
-      return Promise.reject();
-    } catch (error) {
-      console.error('Check auth error:', error);
-      localStorage.removeItem('admin');
-      return Promise.reject();
-    }
-  },
+
+        return Promise.reject();
+    },
 
   // Called when the user navigates to a new location, to check for permissions / roles
   getPermissions: () => {
