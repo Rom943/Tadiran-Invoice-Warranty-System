@@ -1,7 +1,7 @@
 import { AuthProvider } from 'react-admin';
 
 // Set the API URL based on your backend location
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://tadiran-invoice-warranty-system.onrender.com/api';
 
 export const authProvider: AuthProvider = {  // Called when the user attempts to log in
   login: async ({ username, password }) => {

@@ -34,6 +34,7 @@ app.use(cors({origin: function(origin, callback) {
       'http://localhost:3000', 
       'http://10.100.102.13:3000',
       'http://localhost:5173',
+      'http://127.0.0.1:5173',
       'https://tadiran.com'
     ];
     
@@ -62,7 +63,7 @@ const openApiSpec = JSON.parse(
 
 // Update server URL based on environment
 openApiSpec.servers = isProd 
-  ? [{ url: 'https://api.tadiran.com', description: 'Production server' }]
+  ? [{ url: 'https://tadiran-invoice-warranty-system.onrender.com', description: 'Production server' }]
   : [{ url: 'http://localhost:3000', description: 'Development server' }];
 
 // Setup Swagger UI with static spec

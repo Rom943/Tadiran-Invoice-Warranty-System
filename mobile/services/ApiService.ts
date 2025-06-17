@@ -5,10 +5,8 @@ import Config from '../constants/Config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Base URL for API requests
-const API_URL = 
-  process.env.NODE_ENV === 'production'
-    ? Config.API_URL.production
-    : Config.API_URL.development;
+const API_URL = 'https://tadiran-invoice-warranty-system.onrender.com'
+
 
 // Log the API URL for debugging
 console.log('Using API URL:', API_URL);

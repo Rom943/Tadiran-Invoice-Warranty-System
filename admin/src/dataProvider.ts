@@ -1,7 +1,7 @@
 import { DataProvider } from "react-admin";
 
 // Set the API URL based on your backend location
-const API_URL = "http://localhost:3000/api";
+const API_URL = "https://tadiran-invoice-warranty-system.onrender.com/api";
 
 // Function to handle API responses and standardize error handling
 const handleResponse = async (response: Response) => {
