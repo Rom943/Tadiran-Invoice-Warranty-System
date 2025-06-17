@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import jwtService from '../services/jwt.service';
 import { ApiError } from '../utils/error-handler';
 import { JwtPayload } from '../types';
@@ -18,7 +18,7 @@ declare global {
  * @param res - Express response
  * @param next - Express next function
  */
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
   try {
     let token = req.cookies.token;
 
@@ -31,20 +31,22 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
 
     if (!token) {
       const error = new ApiError('Not authenticated', 401);
-      return res.status(error.statusCode).json({
+      res.status(error.statusCode).json({
         success: false,
         message: error.message,
       });
+      return;
     }
 
     // Verify token
     const decoded = jwtService.verifyToken(token);
     if (!decoded) {
       const error = new ApiError('Invalid or expired token', 401);
-      return res.status(error.statusCode).json({
+      res.status(error.statusCode).json({
         success: false,
         message: error.message,
       });
+      return;
     }
 
     // Add user data to request
@@ -65,7 +67,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
  * @param res - Express response
  * @param next - Express next function
  */
-export const requireInstaller = (req: Request, res: Response, next: NextFunction) => {
+export const requireInstaller = (req: Request, res: Response, next: NextFunction): void => {
   try {
     if (!req.user || req.user.userType !== 'installer') {
       const error = new ApiError('Access denied. Installer permissions required.', 403);
@@ -97,7 +99,7 @@ export const requireInstaller = (req: Request, res: Response, next: NextFunction
  * @param res - Express response
  * @param next - Express next function
  */
-export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
+export const requireAdmin = (req: Request, res: Response, next: NextFunction): void => {
   try {
     if (!req.user || req.user.userType !== 'admin') {
       const error = new ApiError('Access denied. Admin permissions required.', 403);
@@ -129,8 +131,8 @@ export const requireAdmin = (req: Request, res: Response, next: NextFunction) =>
  * @param res - Express response
  * @param next - Express next function
  */
-export const requireAdminOrSpecificInstaller = (paramName: string = 'installerId') => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const requireAdminOrSpecificInstaller = (paramName: string = 'installerId'): RequestHandler => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     try {
       if (!req.user) {
         const error = new ApiError('Not authenticated', 401);
