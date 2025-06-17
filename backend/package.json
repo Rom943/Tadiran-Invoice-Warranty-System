@@ -32,7 +32,7 @@
   },
 "scripts": {
   "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-  "build": "npx prisma generate && tsc",
+  "build": "npx prisma generate && tsc && powershell -Command \"if (!(Test-Path 'dist/config')) { New-Item -ItemType Directory -Path 'dist/config' -Force } ; Copy-Item 'src/config/openapi.json' 'dist/config/openapi.json'\"",
   "start": "node dist/index.js"
 }
 }

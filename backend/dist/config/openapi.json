@@ -1,0 +1,1109 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Tadiran Warranty API",
+    "version": "1.0.0",
+    "description": "Warranty activation backend API"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    },
+    {
+      "url": "https://api.tadiran.com",
+      "description": "Production server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "token"
+      }
+    },    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Error message"
+          }
+        }
+      },
+      "Success": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Operation successful"
+          }
+        }
+      },
+      "Warranty": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Warranty ID"
+          },
+          "serialNumber": {
+            "type": "string",
+            "description": "Equipment serial number"
+          },
+          "registrationKey": {
+            "type": "string",
+            "description": "Registration key used"
+          },
+          "clientName": {
+            "type": "string",
+            "description": "Client name"
+          },
+          "clientPhone": {
+            "type": "string",
+            "description": "Client phone number"
+          },
+          "installationAddress": {
+            "type": "string",
+            "description": "Installation address"
+          },
+          "activationDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Warranty activation date"
+          },
+          "expiryDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Warranty expiry date"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "Invoice image URL"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "EXPIRED", "PENDING"],
+            "description": "Warranty status"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },      "Installer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Installer ID"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Installer email"
+          },
+          "name": {
+            "type": "string",
+            "description": "Installer name"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether installer is active"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Admin": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Admin ID"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Admin email"
+          },
+          "name": {
+            "type": "string",
+            "description": "Admin name"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RegistrationKey": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Registration key ID"
+          },
+          "key": {
+            "type": "string",
+            "description": "The registration key value"
+          },
+          "isUsed": {
+            "type": "boolean",
+            "description": "Whether the key has been used"
+          },
+          "usedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "ID of installer who used this key"
+          },
+          "usedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the key was used"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "ID of admin who created this key"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "cookieAuth": []
+    }
+  ],  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health check endpoint",
+        "description": "Returns the health status of the API",
+        "tags": ["Health"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "clientIp": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/register": {
+      "post": {
+        "summary": "Register a new admin user",
+        "description": "Create a new admin user (requires admin authentication)",
+        "tags": ["Admin"],
+        "security": [{"cookieAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Admin's email address"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "description": "Admin's password"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Admin's name (optional)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Admin created successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Success"}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/login": {
+      "post": {
+        "summary": "Admin login",
+        "description": "Authenticate an admin user",
+        "tags": ["Admin"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Success"}
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/logout": {
+      "post": {
+        "summary": "Admin logout",
+        "description": "Logout an admin user",
+        "tags": ["Admin"],
+        "security": [{"cookieAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Success"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/check-session": {
+      "get": {
+        "summary": "Check admin session",
+        "description": "Verify if admin is authenticated",
+        "tags": ["Admin"],
+        "security": [{"cookieAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Session valid",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Success"}
+              }
+            }
+          },
+          "401": {
+            "description": "Session invalid",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/warranties": {
+      "get": {
+        "summary": "Get all warranties (Admin)",
+        "description": "Retrieve all warranties for admin view",
+        "tags": ["Admin"],
+        "security": [{"cookieAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of warranties",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Warranty"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/installers": {
+      "get": {
+        "summary": "Get all installer users",
+        "description": "Retrieve all installer users",
+        "tags": ["Admin"],
+        "security": [{"cookieAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of installer users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Installer"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/installers/{installerId}/warranties": {
+      "get": {
+        "summary": "Get warranties by installer",
+        "description": "Get all warranties created by a specific installer",
+        "tags": ["Admin"],
+        "security": [{"cookieAuth": []}],
+        "parameters": [
+          {
+            "name": "installerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Installer ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of warranties by installer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Warranty"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/admins": {
+      "get": {
+        "summary": "Get all admin users",
+        "description": "Retrieve all admin users",
+        "tags": ["Admin"],
+        "security": [{"cookieAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of admin users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Admin"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/installer/register": {
+      "post": {
+        "summary": "Register a new installer",
+        "description": "Register a new installer using a valid registration key",
+        "tags": ["Installer"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password", "registrationKey"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "registrationKey": {
+                    "type": "string",
+                    "description": "Valid registration key"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Installer registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Success"}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or registration key already used",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          },
+          "409": {
+            "description": "Email already exists",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/installer/login": {
+      "post": {
+        "summary": "Login as installer",
+        "description": "Authenticate installer and get JWT token in cookie",
+        "tags": ["Installer"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Success"}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/installer/logout": {
+      "post": {
+        "summary": "Logout installer",
+        "description": "Clear authentication cookie",
+        "tags": ["Installer"],
+        "security": [{"cookieAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Success"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/installer/check-session": {
+      "get": {
+        "summary": "Check installer session",
+        "description": "Verifies if the current JWT token is valid",
+        "tags": ["Installer"],
+        "security": [{"cookieAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Session status",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Success"}
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired session",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/installer/warranties": {
+      "get": {
+        "summary": "Get warranties by installer",
+        "description": "Get all warranties created by the authenticated installer",
+        "tags": ["Installer"],
+        "security": [{"cookieAuth": []}],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["PENDING", "APPROVED", "REJECTED", "IN_PROGRESS"]
+            },
+            "description": "Filter warranties by status"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Page number for pagination"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Number of items per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of warranties",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Warranty"}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/warranties": {
+      "get": {
+        "summary": "Get warranties",
+        "description": "Get warranties for authenticated user",
+        "tags": ["Warranties"],
+        "security": [{"cookieAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of warranties",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Warranty"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create warranty",
+        "description": "Create a new warranty activation",
+        "tags": ["Warranties"],
+        "security": [{"cookieAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["serialNumber", "registrationKey"],
+                "properties": {
+                  "serialNumber": {
+                    "type": "string",
+                    "description": "Equipment serial number"
+                  },
+                  "registrationKey": {
+                    "type": "string",
+                    "description": "Registration key"
+                  },
+                  "clientName": {
+                    "type": "string",
+                    "description": "Client name"
+                  },
+                  "clientPhone": {
+                    "type": "string",
+                    "description": "Client phone number"
+                  },
+                  "installationAddress": {
+                    "type": "string",
+                    "description": "Installation address"
+                  },
+                  "invoiceImage": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Invoice image file"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Warranty created successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Success"}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },    "/api/warranties/{id}": {
+      "get": {
+        "summary": "Get warranty by ID",
+        "description": "Get a specific warranty by its ID",
+        "tags": ["Warranties"],
+        "security": [{"cookieAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Warranty ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Warranty details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "data": {"$ref": "#/components/schemas/Warranty"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Warranty not found",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a warranty",
+        "description": "Update warranty details (admin or warranty owner only)",
+        "tags": ["Warranties"],
+        "security": [{"cookieAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Warranty ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "productSN": {
+                    "type": "string",
+                    "description": "Product serial number"
+                  },
+                  "clientName": {
+                    "type": "string",
+                    "description": "Client name"
+                  },
+                  "installDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Installation date (YYYY-MM-DD)"
+                  },
+                  "imageUrl": {
+                    "type": "string",
+                    "description": "URL to uploaded invoice image"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Warranty updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Success"}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          },
+          "404": {
+            "description": "Warranty not found",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/keys": {
+      "post": {
+        "summary": "Create a new installer registration key",
+        "description": "Generate a new registration key for installers (admin only)",
+        "tags": ["Registration Keys"],
+        "security": [{"cookieAuth": []}],
+        "responses": {
+          "201": {
+            "description": "Registration key created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "data": {"$ref": "#/components/schemas/RegistrationKey"}
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get all registration keys",
+        "description": "Get all installer registration keys (admin only)",
+        "tags": ["Registration Keys"],
+        "security": [{"cookieAuth": []}],
+        "parameters": [
+          {
+            "name": "used",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Filter keys by used status (true/false)"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Page number for pagination"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Number of items per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of registration keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/RegistrationKey"}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/keys/{id}": {
+      "delete": {
+        "summary": "Delete an unused registration key",
+        "description": "Delete an unused installer registration key (admin only)",
+        "tags": ["Registration Keys"],
+        "security": [{"cookieAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Registration key ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registration key deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Success"}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized or key is already used",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          },
+          "404": {
+            "description": "Registration key not found",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Error"}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
