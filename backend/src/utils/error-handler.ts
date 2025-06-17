@@ -24,7 +24,7 @@ export const formatValidationErrors = (errors: ValidationError[]) => {
 };
 
 export const errorHandler = (res: Response, error: unknown): void => {
-  console.error('Error:', error);
+  
   
   if (error instanceof ApiError) {
     res.status(error.statusCode).json({
