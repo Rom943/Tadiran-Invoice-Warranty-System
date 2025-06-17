@@ -13,7 +13,7 @@ export default {
     options: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax' as const, // Changed from 'strict' to 'lax' to allow cross-origin requests
+      sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax' | 'strict',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
   },

@@ -80,7 +80,7 @@ export const authProvider: AuthProvider = {  // Called when the user attempts to
   checkAuth: async () => {
     try {
 
-      const response = await fetch(`${API_URL}/admin/check-session`, {
+      const response = await fetch(`https://tadiran-invoice-warranty-system.onrender.com/api/admin/check-session`, {
         method: 'GET',
         credentials: 'include',
       });
