@@ -32,6 +32,8 @@ const allowedOrigins = [
   // mobile app requests have no origin
 ];
 
+app.options('*', cors()); // Enable pre-flight for all routes
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps, curl, Postman)
