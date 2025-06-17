@@ -3,7 +3,7 @@ services:
   - type: web
     name: tadiran-warranty-api
     env: node
-    plan: starter
+    plan: free
     buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
@@ -11,7 +11,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 3000
+        value: 10000
       - key: DATABASE_URL
         fromDatabase:
           name: tadiran-warranty-db
@@ -30,8 +30,9 @@ services:
         sync: false
     autoDeploy: true
     rootDir: backend
-    domains:
-      - api.tadiran.com # Replace with your actual domain
+    # Note: Custom domains require paid plans
+    # domains:
+    #   - api.tadiran.com
     
   # Frontend Admin Panel
   - type: web
@@ -41,19 +42,20 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
-        value: https://api.tadiran.com # Replace with your API domain
+        value: https://tadiran-warranty-api.onrender.com # Will be auto-generated URL
       - key: NODE_ENV
         value: production
     autoDeploy: true
     rootDir: admin
-    domains:
-      - admin.tadiran.com # Replace with your actual domain
+    # Note: Custom domains require paid plans
+    # domains:
+    #   - admin.tadiran.com
 
 databases:
   - name: tadiran-warranty-db
     databaseName: tadiran_warranty
     user: tadiran_user
-    plan: starter # Free tier - upgrade to starter+ for production
+    plan: free
 
 # Optional: Background workers or cron jobs
 # - type: worker
