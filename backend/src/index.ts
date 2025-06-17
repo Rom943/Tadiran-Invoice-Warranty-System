@@ -1,11 +1,10 @@
 import express from 'express';
-import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import fs from 'fs';
-import { PrismaClient } from '../generated/prisma';
+import path from 'path';
 import routes from './routes';
 import config from './config/env.config';
 
@@ -55,36 +54,19 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const isProd = process.env.NODE_ENV === 'production';
-// Swagger setup
-const options = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Tadiran Warranty API',
-      version: '1.0.0',
-      description: 'Warranty activation backend API',
-    },
-    servers: [{ url: isProd ? 'https://api.tadiran.com' : 'http://localhost:3000' }],
-    components: {
-      securitySchemes: {
-        cookieAuth: {
-          type: 'apiKey',
-          in: 'cookie',
-          name: 'token'
-        }
-      }
-    },
-    security: [
-      {
-        cookieAuth: []
-      }
-    ]
-  },
-  apis: ['./src/routes/*.ts', './src/controllers/*.ts'], // Files to scan for annotations
-};
 
-const swaggerSpec = swaggerJsdoc(options);
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Load static OpenAPI specification
+const openApiSpec = JSON.parse(
+  fs.readFileSync(path.join(__dirname, 'config', 'openapi.json'), 'utf8')
+);
+
+// Update server URL based on environment
+openApiSpec.servers = isProd 
+  ? [{ url: 'https://api.tadiran.com', description: 'Production server' }]
+  : [{ url: 'http://localhost:3000', description: 'Development server' }];
+
+// Setup Swagger UI with static spec
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
 // API Routes
 app.use('/', routes);
@@ -144,16 +126,16 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`- http://localhost:${PORT}`);
   console.log(`- http://127.0.0.1:${PORT}`);
   
-  console.log('\nAccess from other devices via:');
+
   if (addresses.length > 0) {
     addresses.forEach(address => {
       console.log(`- http://${address}:${PORT}`);
     });
-    console.log(`\nAPI base URL for mobile app: http://${addresses[0]}:${PORT}/api`);
+    console.log(`API base URL for mobile app: http://${addresses[0]}:${PORT}/api`);
   } else {
     console.log('No external network interfaces found.');
   }
   
-  console.log(`\nSwagger UI on http://localhost:${PORT}/docs`);
-  console.log('=========================================');
+  console.log(`Swagger UI on http://localhost:${PORT}/docs`);
+
 });

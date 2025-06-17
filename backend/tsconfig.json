@@ -16,7 +16,6 @@
       "cors",
       "jsonwebtoken",
       "multer",
-      "swagger-jsdoc",
       "swagger-ui-express",
       "uuid"
     ],
