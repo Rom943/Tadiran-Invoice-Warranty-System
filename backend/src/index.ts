@@ -14,19 +14,12 @@ dotenv.config();
 
 const app = express();
 
-
-
 // Ensure temp directory exists
 if (!fs.existsSync(config.tempDir)) {
   fs.mkdirSync(config.tempDir, { recursive: true });
 }
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // For parsing form data
-app.use(cookieParser(config.cookie.secret));
-
-// Update CORS configuration
+// Apply CORS middleware first
 app.use(cors({
   origin: (origin, callback) => {
     const allowedOrigins = [
@@ -35,8 +28,10 @@ app.use(cors({
     ];
 
     if (!origin || allowedOrigins.includes(origin)) {
+      console.log(`CORS allowed for origin: ${origin}`);
       callback(null, true);
     } else {
+      console.log(`CORS rejected for origin: ${origin}`);
       callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
@@ -44,6 +39,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   credentials: true,
 }));
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // For parsing form data
+app.use(cookieParser(config.cookie.secret));
 
 // Serve temporary files if needed (for development testing)
 if (process.env.NODE_ENV !== 'production') {
