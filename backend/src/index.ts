@@ -26,11 +26,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // For parsing form data
 app.use(cookieParser(config.cookie.secret));
 
-// Wide-open CORS configuration for debugging
+// Update CORS configuration
 app.use(cors({
-  origin: '*', // Allow all origins
-  methods: '*', // Allow all methods
-  allowedHeaders: '*', // Allow all headers
+  origin: 'https://tadiran-invoice-warranty-system-h7ilvomsf-rom943s-projects.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  credentials: true,
 }));
 
 // Serve temporary files if needed (for development testing)
