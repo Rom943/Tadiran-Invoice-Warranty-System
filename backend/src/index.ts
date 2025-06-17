@@ -28,7 +28,18 @@ app.use(cookieParser(config.cookie.secret));
 
 // Update CORS configuration
 app.use(cors({
-  origin: 'https://tadiran-invoice-warranty-system-h7ilvomsf-rom943s-projects.vercel.app',
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'https://tadiran-invoice-warranty-system-h7ilvomsf-rom943s-projects.vercel.app',
+      'http://localhost:5173',
+    ];
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   credentials: true,
