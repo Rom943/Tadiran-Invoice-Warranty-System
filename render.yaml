@@ -1,12 +1,33 @@
 services:
-  # Backend API Service
   - type: web
-    name: tadiran-warranty-api
+    name: tadiran-backend
     env: node
-    plan: free
-    buildCommand: npm install && npm run build
-    startCommand: npm start
-    healthCheckPath: /api/health    
+    plan: free  # אפשר לשנות ל 'starter' אם תרצה SSH ושרת שלא נרדם
     rootDir: backend
-
-
+    buildCommand: |
+      rm -rf node_modules package-lock.json
+      npm install express-validator@6.14.3 validator@13.7.0
+      npm run build
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: development
+      - key: JWT_SECRET
+        value: your-jwt-secret
+      - key: COOKIE_SECRET
+        value: your-cookie-secret
+      - key: DATABASE_URL
+        value: your-db-url
+      - key: CLOUDINARY_CLOUD_NAME
+        value: your-cloud-name
+      - key: CLOUDINARY_API_KEY
+        value: your-cloudinary-api-key
+      - key: CLOUDINARY_API_SECRET
+        value: your-cloudinary-api-secret
+      - key: CLOUDINARY_FOLDER
+        value: warranties
+      - key: GOOGLE_CLOUD_PROJECT_ID
+        value: your-gcloud-project-id
+      - key: GOOGLE_VISION_KEY_FILE_PATH
+        value: your-base64-or-filepath
