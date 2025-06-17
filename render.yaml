@@ -1,0 +1,86 @@
+services:
+  # Backend API Service
+  - type: web
+    name: tadiran-warranty-api
+    env: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tadiran-warranty-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: COOKIE_SECRET
+        generateValue: true
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
+        sync: false
+    autoDeploy: true
+    rootDir: backend
+    domains:
+      - api.tadiran.com # Replace with your actual domain
+    
+  # Frontend Admin Panel
+  - type: web
+    name: tadiran-warranty-admin
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://api.tadiran.com # Replace with your API domain
+      - key: NODE_ENV
+        value: production
+    autoDeploy: true
+    rootDir: admin
+    domains:
+      - admin.tadiran.com # Replace with your actual domain
+
+databases:
+  - name: tadiran-warranty-db
+    databaseName: tadiran_warranty
+    user: tadiran_user
+    plan: starter # Free tier - upgrade to starter+ for production
+
+# Optional: Background workers or cron jobs
+# - type: worker
+#   name: tadiran-warranty-worker
+#   env: node
+#   buildCommand: npm install && npm run build
+#   startCommand: npm run worker
+#   rootDir: backend
+#   envVars:
+#     - key: NODE_ENV
+#       value: production
+#     - key: DATABASE_URL
+#       fromDatabase:
+#         name: tadiran-warranty-db
+#         property: connectionString
+
+# Optional: Cron jobs for cleanup, etc.
+# - type: cron
+#   name: warranty-cleanup
+#   schedule: "0 2 * * *" # Daily at 2 AM
+#   buildCommand: npm install && npm run build
+#   startCommand: npm run cleanup
+#   rootDir: backend
+#   envVars:
+#     - key: NODE_ENV
+#       value: production
+#     - key: DATABASE_URL
+#       fromDatabase:
+#         name: tadiran-warranty-db
+#         property: connectionString
