@@ -24,27 +24,9 @@ if (!fs.existsSync(config.tempDir)) {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // For parsing form data
 app.use(cookieParser(config.cookie.secret));
-app.use(cors({origin: function(origin, callback) {
-    // Allow requests with no origin 
-    // (like mobile apps or curl requests)
-    if(!origin){ 
-      return callback(null, true);}
-    console.log(`Origin: ${origin}`);
-    const allowedOrigins = [
-      'http://localhost:3000', 
-      'http://10.100.102.13:3000',
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'https://tadiran.com'
-    ];
-    
-    if(allowedOrigins.indexOf(origin) === -1){
-      console.log(`Origin ${origin} not allowed by CORS`);
-      return callback(null, false);
-    }
-    
-    return callback(null, true);
-  },  credentials: true,
+app.use(cors({
+  origin: true, // Allow all origins
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
