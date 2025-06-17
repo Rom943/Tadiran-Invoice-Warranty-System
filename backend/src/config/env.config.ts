@@ -17,14 +17,14 @@ export default {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
   },
-  environment: process.env.NODE_ENV || 'development',
+  environment: process.env.NODE_ENV,
   database: {
     url: process.env.DATABASE_URL,
   },  cloudinary: {
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
-    apiKey: process.env.CLOUDINARY_API_KEY || '',
-    apiSecret: process.env.CLOUDINARY_API_SECRET || '',
-    folder: process.env.CLOUDINARY_FOLDER || 'warranties',
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME ,
+    apiKey: process.env.CLOUDINARY_API_KEY ,
+    apiSecret: process.env.CLOUDINARY_API_SECRET ,
+    folder: process.env.CLOUDINARY_FOLDER ,
   },  googleVision: {
     keyFilePath: process.env.GOOGLE_VISION_KEY_FILE_PATH || '', // Can be file path or base64-encoded JSON
     projectId: process.env.GOOGLE_CLOUD_PROJECT_ID || '',

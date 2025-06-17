@@ -75,7 +75,7 @@ export default function WarrantyFormScreen() {  // Form state
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         quality: 0.8,
-        aspect: [4, 3]
+        aspect: [3, 4]
       });
       
       if (!result.canceled && result.assets && result.assets.length > 0) {

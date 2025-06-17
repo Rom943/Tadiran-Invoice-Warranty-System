@@ -4,7 +4,6 @@ import swaggerUi from 'swagger-ui-express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
-import path from 'path';
 import fs from 'fs';
 import { PrismaClient } from '../generated/prisma';
 import routes from './routes';

@@ -38,7 +38,6 @@ const WarrantyDetailsModal: React.FC<WarrantyDetailsModalProps> = ({
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
-            {/* Header */}
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>פרטי אחריות</Text>
               <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -46,23 +45,23 @@ const WarrantyDetailsModal: React.FC<WarrantyDetailsModalProps> = ({
               </TouchableOpacity>
             </View>
 
-            {/* Warranty Details */}
+
             <View style={styles.modalDetails}>
               <View style={styles.detailRow}>
                 <Ionicons name="person-outline" size={20} color={Colors.dark.primary} />
-                <Text style={styles.detailLabel}>לקוח:</Text>
+                <Text style={styles.detailLabel}> לקוח: </Text>
                 <Text style={styles.detailValue}>{warranty.clientName}</Text>
               </View>
 
               <View style={styles.detailRow}>
                 <Ionicons name="hardware-chip-outline" size={20} color={Colors.dark.primary} />
-                <Text style={styles.detailLabel}>מוצר:</Text>
+                <Text style={styles.detailLabel}> מוצר: </Text>
                 <Text style={styles.detailValue}>{warranty.productInfo}</Text>
               </View>
 
               <View style={styles.detailRow}>
                 <Ionicons name="calendar-outline" size={20} color={Colors.dark.primary} />
-                <Text style={styles.detailLabel}>תאריך התקנה:</Text>
+                <Text style={styles.detailLabel}> תאריך התקנה: </Text>
                 <Text style={styles.detailValue}>
                   {new Date(warranty.installationDate).toLocaleDateString('he-IL')}
                 </Text>
@@ -70,7 +69,7 @@ const WarrantyDetailsModal: React.FC<WarrantyDetailsModalProps> = ({
 
               <View style={styles.detailRow}>
                 <Ionicons name="time-outline" size={20} color={Colors.dark.primary} />
-                <Text style={styles.detailLabel}>תאריך שליחה:</Text>
+                <Text style={styles.detailLabel}> תאריך שליחה: </Text>
                 <Text style={styles.detailValue}>
                   {new Date(warranty.submissionDate).toLocaleDateString('he-IL')}
                 </Text>
@@ -78,19 +77,17 @@ const WarrantyDetailsModal: React.FC<WarrantyDetailsModalProps> = ({
 
               <View style={styles.detailRow}>
                 <Ionicons name="flag-outline" size={20} color={Colors.dark.primary} />
-                <Text style={styles.detailLabel}>סטאטוס:</Text>
+                <Text style={styles.detailLabel}> סטאטוס: </Text>
                 <Text style={[styles.detailValue, styles.statusText]}>
                   {renderStatusText(warranty.status)}
                 </Text>
               </View>
             </View>
 
-            {/* Invoice Image Section */}
-
               <View style={styles.imageSection}>
                 <View style={styles.imageSectionHeader}>
                   <Ionicons name="document-text-outline" size={20} color={Colors.dark.primary} />
-                  <Text style={styles.imageLabel}>חשבונית:</Text>
+                  <Text style={styles.imageLabel}> חשבונית: </Text>
                 </View>
                 <View style={styles.imageContainer}>
                   <Image
@@ -101,11 +98,11 @@ const WarrantyDetailsModal: React.FC<WarrantyDetailsModalProps> = ({
                 </View>
               </View>
           
-
-            {/* Action Buttons */}
             <View style={styles.actionButtons}>
               <TouchableOpacity style={styles.closeActionButton} onPress={onClose}>
-                <Text style={styles.closeActionButtonText}>סגור</Text>
+                <Text style={styles.closeActionButtonText}>
+                   סגור 
+                   </Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -135,7 +132,7 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    direction: 'rtl', // Right-to-left layout for Hebrew
+    direction: 'rtl', 
   },
   modalScrollView: {
     maxHeight: Dimensions.get('window').height * 0.8,
