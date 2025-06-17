@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import routes from './routes';
+import debugRoutes from './routes/debug.routes';
 import config from './config/env.config';
 
 // Load environment variables
@@ -54,6 +55,7 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
 // API Routes
 app.use('/', routes);
+app.use('/api/debug', debugRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
