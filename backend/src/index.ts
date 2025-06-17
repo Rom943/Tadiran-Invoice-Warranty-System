@@ -24,11 +24,26 @@ if (!fs.existsSync(config.tempDir)) {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // For parsing form data
 app.use(cookieParser(config.cookie.secret));
+
+const allowedOrigins = [
+  'http://localhost:5173', // Admin panel (local)
+  'https://tadiran-invoice-warranty-system-h7ilvomsf-rom943s-projects.vercel.app', // Admin panel (Vercel preview)
+  'https://tadiran-invoice-warrenty-system-admin.vercel.app', // Admin panel (Vercel production)
+  // mobile app requests have no origin
+];
+
 app.use(cors({
-  origin: true, // Allow all origins
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
 }));
 
 // Serve temporary files if needed (for development testing)
