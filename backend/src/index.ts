@@ -23,7 +23,7 @@ if (!fs.existsSync(config.tempDir)) {
 app.use(cors({
   origin: (origin, callback) => {
     const allowedOrigins = [
-      'https://tadiran-invoice-warranty-system-h7ilvomsf-rom943s-projects.vercel.app',
+      'https://tadiran-invoice-warranty-system.vercel.app',
       'http://localhost:5173',
     ];
 
