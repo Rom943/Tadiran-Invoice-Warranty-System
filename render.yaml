@@ -1,33 +1,13 @@
+# Exported from Render on 2025-06-17T16:16:04Z
 services:
-  - type: web
-    name: tadiran-backend
-    env: node
-    plan: free  # אפשר לשנות ל 'starter' אם תרצה SSH ושרת שלא נרדם
-    rootDir: backend
-    buildCommand: |
-      rm -rf node_modules package-lock.json
-      npm install express-validator@6.14.3 validator@13.7.0
-      npm run build
-    startCommand: npm start
-    autoDeploy: true
-    envVars:
-      - key: NODE_ENV
-        value: development
-      - key: JWT_SECRET
-        value: your-jwt-secret
-      - key: COOKIE_SECRET
-        value: your-cookie-secret
-      - key: DATABASE_URL
-        value: your-db-url
-      - key: CLOUDINARY_CLOUD_NAME
-        value: your-cloud-name
-      - key: CLOUDINARY_API_KEY
-        value: your-cloudinary-api-key
-      - key: CLOUDINARY_API_SECRET
-        value: your-cloudinary-api-secret
-      - key: CLOUDINARY_FOLDER
-        value: warranties
-      - key: GOOGLE_CLOUD_PROJECT_ID
-        value: your-gcloud-project-id
-      - key: GOOGLE_VISION_KEY_FILE_PATH
-        value: your-base64-or-filepath
+- type: web
+  name: Tadiran-Invoice-Warranty-System
+  runtime: node
+  repo: https://github.com/Rom943/Tadiran-Invoice-Warranty-System
+  plan: free
+  region: frankfurt
+  buildCommand: npm run build
+  startCommand: npm start
+  autoDeployTrigger: commit
+  rootDir: backend
+version: "1"
