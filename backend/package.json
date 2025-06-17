@@ -32,7 +32,7 @@
   },
 "scripts": {
   "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-  "build": "rm -rf node_modules package-lock.json && npm install express-validator@6.14.3 validator@13.7.0 && npx prisma generate && tsc",
+  "build": "npm install express-validator@6.14.3 validator@13.7.0 && npx prisma generate && tsc",
   "start": "node dist/index.js"
 }
 }
