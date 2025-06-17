@@ -19,7 +19,6 @@ export const uploadImage = async (filePath: string): Promise<string> => {
     
     return result.secure_url;
   } catch (error) {
-    console.error('Error uploading image to Cloudinary:', error);
     throw error;
   }
 };
@@ -28,7 +27,6 @@ export const deleteImage = async (publicId: string): Promise<void> => {
   try {
     await cloudinary.uploader.destroy(publicId);
   } catch (error) {
-    console.error('Error deleting image from Cloudinary:', error);
     throw error;
   }
 };
