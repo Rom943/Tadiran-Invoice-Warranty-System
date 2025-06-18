@@ -28,6 +28,7 @@ export const authProvider: AuthProvider = {  // Called when the user attempts to
       console.log('Login response status:', response.status);
       const responseText = await response.text();
       console.log('Login response text:', responseText);
+      console.log('Login request headers:', response.headers);
 
       
       // Detailed error logging
