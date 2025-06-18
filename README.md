@@ -106,12 +106,8 @@ The mobile app is available as an APK build through Expo Application Services (E
    npx prisma generate
    ```
 
-5. **Create Admin User**
-   ```bash
-   npm run create-admin
-   ```
 
-6. **Start the server**
+5. **Start the server**
    ```bash
    npm run dev
    ```
@@ -128,11 +124,6 @@ The mobile app is available as an APK build through Expo Application Services (E
    npm install
    ```
 
-3. **Environment Variables**
-   Create a `.env` file (if needed) or update the API URL in the code to point to your local backend:
-   ```env
-   VITE_API_URL=http://localhost:3000/api
-   ```
 
 4. **Start the development server**
    ```bash
@@ -209,4 +200,5 @@ The system uses PostgreSQL with the following main entities:
 - Admin panel supports real-time warranty status updates
 - All API endpoints are documented and testable via Swagger UI
 
-For technical support or additional setup assistance, contact the development team.
+For technical support or additional setup assistance,
+contact me on my website: https://romtech.website.
