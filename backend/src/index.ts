@@ -1,14 +1,14 @@
 import express from 'express';
 import swaggerUi from 'swagger-ui-express';
-import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
+import { networkInterfaces } from 'os';
+
 import routes from './routes';
 import debugRoutes from './routes/debug.routes';
 import config from './config/env.config';
-import { networkInterfaces } from 'os';
 
 // Load environment variables
 dotenv.config();
@@ -20,33 +20,16 @@ if (!fs.existsSync(config.tempDir)) {
   fs.mkdirSync(config.tempDir, { recursive: true });
 }
 
-// Allowed origins for CORS
+// ✅ CORS - handled manually
 const allowedOrigins = [
-  'https://tadiran-invoice-warranty-system-h7ilvomsf-rom943s-projects.vercel.app',
   'https://tadiran-invoice-warranty-system.vercel.app',
+  'https://tadiran-invoice-warranty-system-h7ilvomsf-rom943s-projects.vercel.app',
   'http://localhost:5173',
 ];
 
-// CORS middleware
-const corsOptions: cors.CorsOptions = {
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`Origin ${origin} not allowed by CORS`));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-};
-
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // handles preflight normally
-
-// 🛠 CORS Fallback Handler (for platforms like Render)
 app.use((req: express.Request, res: express.Response, next: express.NextFunction): void => {
   const origin = req.headers.origin;
+
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -62,30 +45,32 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
   next();
 });
 
-// Middleware
+// 🧱 Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(config.cookie.secret));
 
-// Serve temp files in dev
+// 🧪 Dev-only static temp
 if (process.env.NODE_ENV !== 'production') {
   app.use('/temp', express.static(config.tempDir));
 }
 
-// Swagger
+// 📘 Swagger UI
 const openApiSpec = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'config', 'openapi.json'), 'utf8')
 );
+
 openApiSpec.servers = [
   { url: 'https://tadiran-invoice-warranty-system.onrender.com', description: 'Production server' },
 ];
+
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
-// API routes
+// 🛣 Routes
 app.use('/', routes);
 app.use('/api/debug', debugRoutes);
 
-// Health check
+// ❤️ Health check
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -94,7 +79,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Error handler
+// ❌ Error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
@@ -104,7 +89,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-// 404 fallback
+// 404
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -112,7 +97,7 @@ app.use((req, res) => {
   });
 });
 
-// Logging IPs
+// 🌐 Print network IPs
 const nets = networkInterfaces();
 const addresses: string[] = [];
 for (const name of Object.keys(nets)) {
@@ -123,11 +108,11 @@ for (const name of Object.keys(nets)) {
   }
 }
 
-// Start server
+// 🚀 Start server
 const PORT = parseInt(process.env.PORT || '3000', 10);
 app.listen(PORT, '0.0.0.0', () => {
   console.log('=========================================');
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Swagger UI: http://localhost:${PORT}/docs`);
-  addresses.forEach(addr => console.log(`- http://${addr}:${PORT}`));
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`📘 Swagger UI: http://localhost:${PORT}/docs`);
+  addresses.forEach(addr => console.log(`🌐 http://${addr}:${PORT}`));
 });
