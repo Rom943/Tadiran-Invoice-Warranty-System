@@ -20,14 +20,16 @@ if (!fs.existsSync(config.tempDir)) {
   fs.mkdirSync(config.tempDir, { recursive: true });
 }
 
-// 🛡️ CORS setup
+// Allowed origins for CORS
+const allowedOrigins = [
+  'https://tadiran-invoice-warranty-system-h7ilvomsf-rom943s-projects.vercel.app',
+  'https://tadiran-invoice-warranty-system.vercel.app',
+  'http://localhost:5173',
+];
+
+// CORS middleware
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    const allowedOrigins = [
-      'https://tadiran-invoice-warranty-system-h7ilvomsf-rom943s-projects.vercel.app',
-      'https://tadiran-invoice-warranty-system.vercel.app',
-      'http://localhost:5173',
-    ];
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -39,21 +41,38 @@ const corsOptions: cors.CorsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
 };
 
-// 🧠 Apply CORS before any routes
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // 🔥 critical for preflight requests
+app.options('*', cors(corsOptions)); // handles preflight normally
+
+// 🛠 CORS Fallback Handler (for platforms like Render)
+app.use((req: express.Request, res: express.Response, next: express.NextFunction): void => {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept');
+  }
+
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+
+  next();
+});
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(config.cookie.secret));
 
-// Serve temp files in development
+// Serve temp files in dev
 if (process.env.NODE_ENV !== 'production') {
   app.use('/temp', express.static(config.tempDir));
 }
 
-// Swagger UI
+// Swagger
 const openApiSpec = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'config', 'openapi.json'), 'utf8')
 );
@@ -62,7 +81,7 @@ openApiSpec.servers = [
 ];
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
-// API Routes
+// API routes
 app.use('/', routes);
 app.use('/api/debug', debugRoutes);
 
@@ -75,7 +94,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Error handling middleware
+// Error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
@@ -93,7 +112,7 @@ app.use((req, res) => {
   });
 });
 
-// Logging available addresses
+// Logging IPs
 const nets = networkInterfaces();
 const addresses: string[] = [];
 for (const name of Object.keys(nets)) {
@@ -104,7 +123,7 @@ for (const name of Object.keys(nets)) {
   }
 }
 
-// Start the server
+// Start server
 const PORT = parseInt(process.env.PORT || '3000', 10);
 app.listen(PORT, '0.0.0.0', () => {
   console.log('=========================================');
