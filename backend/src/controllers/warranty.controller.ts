@@ -226,20 +226,31 @@ export const updateWarranty = async (req: Request, res: Response): Promise<void>
     if (!req.user) {
       throw new ApiError('Not authenticated', 401);
     }
-    console.log(req.user);
+    console.log('Update warranty request:', req.user);
+    console.log('Request body:', req.body);
+    console.log('Request params:', req.params);
+    
     const { id } = req.params;
-    const { productSN, clientName, installDate, imageUrl,status} = req.body;
+    const { productSN, clientName, installDate, imageUrl, status} = req.body;
+    
     // Check if warranty exists
+    console.log('Looking for warranty with ID:', id);
     const existingWarranty = await prisma.warranty.findUnique({
       where: { id }
     });
+    
     if (!existingWarranty) {
+      console.log('Warranty not found for ID:', id);
       throw new ApiError('Warranty not found', 404);
     }
+    
+    console.log('Found existing warranty:', existingWarranty);
+    
     // Check authorization (admin or warranty owner)
     if (req.user.userType !== 'admin' && existingWarranty.installerId !== req.user.userId) {
       throw new ApiError('Not authorized to update this warranty', 403);
     }
+    
     // Prepare update data
     let updateData: any = {};
     if (productSN !== undefined) updateData.productSN = productSN;
@@ -252,11 +263,18 @@ export const updateWarranty = async (req: Request, res: Response): Promise<void>
         throw new ApiError('Invalid status value', 400);
       }
       updateData.status = status;
-    }    // Update warranty
+    }
+    
+    console.log('Update data prepared:', updateData);
+    
+    // Update warranty
+    console.log('Attempting to update warranty...');
     const warranty = await prisma.warranty.update({
       where: { id },
       data: updateData
     });
+    
+    console.log('Warranty updated successfully:', warranty);
 
     // Return success response
     res.status(200).json({
@@ -265,6 +283,7 @@ export const updateWarranty = async (req: Request, res: Response): Promise<void>
       data: warranty
     });
   } catch (error) {
+    console.error('Error in updateWarranty:', error);
     errorHandler(res, error);
   }
 };

@@ -223,16 +223,21 @@ const updateWarranty = async (req, res) => {
         if (!req.user) {
             throw new error_handler_1.ApiError('Not authenticated', 401);
         }
-        console.log(req.user);
+        console.log('Update warranty request:', req.user);
+        console.log('Request body:', req.body);
+        console.log('Request params:', req.params);
         const { id } = req.params;
         const { productSN, clientName, installDate, imageUrl, status } = req.body;
         // Check if warranty exists
+        console.log('Looking for warranty with ID:', id);
         const existingWarranty = await prisma.warranty.findUnique({
             where: { id }
         });
         if (!existingWarranty) {
+            console.log('Warranty not found for ID:', id);
             throw new error_handler_1.ApiError('Warranty not found', 404);
         }
+        console.log('Found existing warranty:', existingWarranty);
         // Check authorization (admin or warranty owner)
         if (req.user.userType !== 'admin' && existingWarranty.installerId !== req.user.userId) {
             throw new error_handler_1.ApiError('Not authorized to update this warranty', 403);
@@ -254,17 +259,14 @@ const updateWarranty = async (req, res) => {
             }
             updateData.status = status;
         }
+        console.log('Update data prepared:', updateData);
         // Update warranty
+        console.log('Attempting to update warranty...');
         const warranty = await prisma.warranty.update({
             where: { id },
-            data: { ...updateData,
-                adminUser: {
-                    connect: {
-                        id: req.body.adminUserId // Use provided adminUserId or current user
-                    }
-                }
-            }
+            data: updateData
         });
+        console.log('Warranty updated successfully:', warranty);
         // Return success response
         res.status(200).json({
             success: true,
@@ -273,6 +275,7 @@ const updateWarranty = async (req, res) => {
         });
     }
     catch (error) {
+        console.error('Error in updateWarranty:', error);
         (0, error_handler_1.errorHandler)(res, error);
     }
 };
