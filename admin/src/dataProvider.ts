@@ -27,23 +27,26 @@ const handleResponse = async (response: Response) => {
 const apiRequest = async (url: string, options: any = {}) => {
   const token = localStorage.getItem("token");
 
-  const defaultOptions: any = {
-    headers: new Headers({ "Content-Type": "application/json" }),
+  // Create headers object
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
   };
 
   if (token) {
-    defaultOptions.headers.set("Authorization", `Bearer ${token}`);
+    headers.Authorization = `Bearer ${token}`;
   }
 
-  // Merge options
+  // Merge with any additional headers from options
+  if (options.headers) {
+    Object.assign(headers, options.headers);
+  }
+  // Create final options
   const finalOptions = {
-    ...defaultOptions,
     ...options,
-    headers: {
-      ...defaultOptions.headers,
-      ...options.headers,
-    },
+    headers,
   };
+
+  console.log("API Request:", url, "Headers:", headers);
 
   try {
     const response = await fetch(url, finalOptions);
