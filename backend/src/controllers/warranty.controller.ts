@@ -252,17 +252,10 @@ export const updateWarranty = async (req: Request, res: Response): Promise<void>
         throw new ApiError('Invalid status value', 400);
       }
       updateData.status = status;
-    }
-    // Update warranty
+    }    // Update warranty
     const warranty = await prisma.warranty.update({
       where: { id },
-      data: {...updateData,
-        adminUser:{
-          connect:{
-            id:  req.body.adminUserId// Use provided adminUserId or current user
-          }
-        }
-      }
+      data: updateData
     });
 
     // Return success response
