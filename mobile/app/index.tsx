@@ -28,8 +28,7 @@ export default function Index() {
         style={styles.logo}
         resizeMode="contain"
       />
-      <Text style={styles.title}>Tadiran</Text>
-      <Text style={styles.subtitle}>Warranty Activation System</Text>
+
       <ActivityIndicator size="large" color={Colors.dark.primary} style={styles.loading} />
     </View>
   );
