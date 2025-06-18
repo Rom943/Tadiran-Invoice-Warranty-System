@@ -1,4 +1,13 @@
 {
+  "name": "tadiran-invoice-warranty-system",
+  "version": "1.0.0",
+  "description": "Backend API for Tadiran Warranty System",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "npx prisma generate && tsc && mkdir -p dist/config && cp src/config/openapi.json dist/config/openapi.json",
+    "start": "node dist/index.js"
+  },
   "dependencies": {
     "@google-cloud/vision": "^5.2.0",
     "@prisma/client": "^6.9.0",
@@ -13,7 +22,6 @@
     "express-validator": "6.14.3",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
-    "prisma": "^6.9.0",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0",
     "validator": "13.7.0"
@@ -28,11 +36,7 @@
     "@types/node": "^24.0.3",
     "@types/swagger-ui-express": "^4.1.8",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.8.3"
-  },
-"scripts": {
-  "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-  "build": "npx prisma generate && tsc && powershell -Command \"if (!(Test-Path 'dist/config')) { New-Item -ItemType Directory -Path 'dist/config' -Force } ; Copy-Item 'src/config/openapi.json' 'dist/config/openapi.json'\"",
-  "start": "node dist/index.js"
-}
+    "typescript": "^5.8.3",
+    "prisma": "^6.9.0"
+  }
 }
