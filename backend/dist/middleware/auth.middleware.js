@@ -13,6 +13,7 @@ const error_handler_1 = require("../utils/error-handler");
  * @param next - Express next function
  */
 const authenticate = (req, res, next) => {
+    console.log("cookie:", req.cookies.token);
     try {
         let token = req.cookies.token;
         if (!token && req.headers.authorization) {
