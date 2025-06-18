@@ -18,7 +18,7 @@ const app = express();
 const allowedOrigins = [
   'https://tadiran-invoice-warranty-system.vercel.app',
   'https://tadiran-invoice-warranty-system-h7ilvomsf-rom943s-projects.vercel.app',
-  'http://localhost:5173',
+  'http://localhost:5173'
 ];
 
 app.use((req: express.Request, res: express.Response, next: express.NextFunction): void => {

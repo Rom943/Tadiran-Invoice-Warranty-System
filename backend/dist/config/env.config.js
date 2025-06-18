@@ -16,7 +16,7 @@ exports.default = {
         options: {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax', // Changed from 'strict' to 'lax' to allow cross-origin requests
+            sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax'),
             maxAge: 24 * 60 * 60 * 1000, // 24 hours
         },
     },

@@ -14,13 +14,18 @@ const error_handler_1 = require("../utils/error-handler");
  */
 const authenticate = (req, res, next) => {
     try {
-        // Get token from cookie
-        const token = req.cookies.token;
+        let token = req.cookies.token;
+        if (!token && req.headers.authorization) {
+            const parts = req.headers.authorization.split(' ');
+            if (parts.length === 2 && parts[0] === 'Bearer') {
+                token = parts[1];
+            }
+        }
         if (!token) {
             const error = new error_handler_1.ApiError('Not authenticated', 401);
             res.status(error.statusCode).json({
                 success: false,
-                message: error.message
+                message: error.message,
             });
             return;
         }
@@ -30,7 +35,7 @@ const authenticate = (req, res, next) => {
             const error = new error_handler_1.ApiError('Invalid or expired token', 401);
             res.status(error.statusCode).json({
                 success: false,
-                message: error.message
+                message: error.message,
             });
             return;
         }
@@ -40,16 +45,10 @@ const authenticate = (req, res, next) => {
     }
     catch (error) {
         if (error instanceof error_handler_1.ApiError) {
-            res.status(error.statusCode).json({
-                success: false,
-                message: error.message
-            });
+            res.status(error.statusCode).json({ success: false, message: error.message });
         }
         else {
-            res.status(401).json({
-                success: false,
-                message: 'Authentication failed'
-            });
+            res.status(500).json({ success: false, message: 'An unexpected error occurred' });
         }
     }
 };
