@@ -1,26 +1,20 @@
 import express from 'express';
-import swaggerUi from 'swagger-ui-express';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
+import swaggerUi from 'swagger-ui-express';
 import { networkInterfaces } from 'os';
 
 import routes from './routes';
 import debugRoutes from './routes/debug.routes';
 import config from './config/env.config';
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 
-// Ensure temp directory exists
-if (!fs.existsSync(config.tempDir)) {
-  fs.mkdirSync(config.tempDir, { recursive: true });
-}
-
-// ✅ CORS - handled manually
+// 🛡️ Manual CORS Middleware (works on Render!)
 const allowedOrigins = [
   'https://tadiran-invoice-warranty-system.vercel.app',
   'https://tadiran-invoice-warranty-system-h7ilvomsf-rom943s-projects.vercel.app',
@@ -45,32 +39,33 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
   next();
 });
 
-// 🧱 Middleware
+// 🧱 Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(config.cookie.secret));
 
-// 🧪 Dev-only static temp
+// 📁 Dev static files
 if (process.env.NODE_ENV !== 'production') {
+  if (!fs.existsSync(config.tempDir)) {
+    fs.mkdirSync(config.tempDir, { recursive: true });
+  }
   app.use('/temp', express.static(config.tempDir));
 }
 
-// 📘 Swagger UI
+// 📘 Swagger
 const openApiSpec = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'config', 'openapi.json'), 'utf8')
 );
-
 openApiSpec.servers = [
   { url: 'https://tadiran-invoice-warranty-system.onrender.com', description: 'Production server' },
 ];
-
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
-// 🛣 Routes
+// 🛣️ Routes
 app.use('/', routes);
 app.use('/api/debug', debugRoutes);
 
-// ❤️ Health check
+// 🩺 Health
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -89,7 +84,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-// 404
+// 404 fallback
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -97,7 +92,7 @@ app.use((req, res) => {
   });
 });
 
-// 🌐 Print network IPs
+// 🌐 IP log
 const nets = networkInterfaces();
 const addresses: string[] = [];
 for (const name of Object.keys(nets)) {
@@ -108,11 +103,10 @@ for (const name of Object.keys(nets)) {
   }
 }
 
-// 🚀 Start server
+// 🚀 Start
 const PORT = parseInt(process.env.PORT || '3000', 10);
 app.listen(PORT, '0.0.0.0', () => {
-  console.log('=========================================');
   console.log(`✅ Server running on port ${PORT}`);
-  console.log(`📘 Swagger UI: http://localhost:${PORT}/docs`);
+  console.log(`📘 Swagger: http://localhost:${PORT}/docs`);
   addresses.forEach(addr => console.log(`🌐 http://${addr}:${PORT}`));
 });
