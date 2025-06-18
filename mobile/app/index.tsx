@@ -28,7 +28,6 @@ export default function Index() {
         style={styles.logo}
         resizeMode="contain"
       />
-
       <ActivityIndicator size="large" color={Colors.dark.primary} style={styles.loading} />
     </View>
   );

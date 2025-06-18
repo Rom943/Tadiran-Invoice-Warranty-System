@@ -33,7 +33,7 @@ export default function WarrantyFormScreen() {  // Form state
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (status !== 'granted') {
-        Alert.alert('Permission required', 'Please allow access to your photo library');
+        Alert.alert('אפשר גישה לגלריה', 'יש לאשר גישה לגלריה שלך כדי להעלות תמונה');
         return;
       }
       
@@ -56,8 +56,7 @@ export default function WarrantyFormScreen() {  // Form state
         });
       }
     } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to pick image');
+      Alert.alert('שגיאה', 'בחירת תמונה נכשלה');
     }
   };
   
@@ -67,7 +66,7 @@ export default function WarrantyFormScreen() {  // Form state
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       
       if (status !== 'granted') {
-        Alert.alert('Permission required', 'Please allow access to your camera');
+        Alert.alert('אפשר גישה למצלמה', 'יש לאשר גישה למצלמה שלך כדי לצלם תמונה');
         return;
       }
       
@@ -90,8 +89,7 @@ export default function WarrantyFormScreen() {  // Form state
         });
       }
     } catch (error) {
-      console.log('Error taking photo:', error);
-      Alert.alert('Error', 'Failed to take photo');
+      Alert.alert('שגיאה', 'צילום תמונה נכשל');
     }
   };
   // Pick PDF document
@@ -110,8 +108,7 @@ export default function WarrantyFormScreen() {  // Form state
         });
       }
     } catch (error) {
-      console.log('Error picking document:', error);
-      Alert.alert('Error', 'Failed to pick document');
+      Alert.alert('שגיאה', 'העלאת מסמך נכשלה');
     }
   };
   // Form submission state
@@ -168,15 +165,6 @@ export default function WarrantyFormScreen() {  // Form state
         installationDate: installationDate.toISOString().split('T')[0],
       };
       
-      // Log submission attempt for debugging
-      console.log('Attempting to submit warranty with data:', JSON.stringify({
-        ...warrantyData,
-        invoiceFile: invoiceFile ? {
-          type: invoiceFile.type,
-          name: invoiceFile.name,
-          // Don't log the full URI
-        } : null
-      }));
       
       // Submit the warranty request with file if it exists
       let result;
@@ -186,9 +174,7 @@ export default function WarrantyFormScreen() {  // Form state
             ...warrantyData,
             invoiceFile: invoiceFile
           });
-          console.log('Warranty submission successful:', result);
         } catch (submitError: any) {
-          console.log('Warranty submission error:', submitError.message);
           throw submitError;
         }
       } else {
@@ -223,11 +209,11 @@ export default function WarrantyFormScreen() {  // Form state
         } else {
           setNotification({
             type: 'info',
-            message: 'הטופס נשלח בהצלחה! הבקשה לאישור אחריות נמצאת בבדיקה ידנית.'
+            message: 'הטופס נשלח בהצלחה! הבקשה לאישור אחריות נמצאת בבדיקה.'
           });
         }
       } catch (error) {
-        console.log('Error processing invoice:', error);
+
         setNotification({
           type: 'info',
           message: 'הטופס נשלח בהצלחה! אך הייתה שגיאה בעיבוד החשבונית.'
@@ -239,7 +225,7 @@ export default function WarrantyFormScreen() {  // Form state
       setProductInfo('');
       setInstallationDate(new Date());
       setInvoiceFile(null);    } catch (error: any) {
-      console.log('שגיאה בשליחת הטופס', error);
+
       
       // Detailed error message for debugging
       let detailedError = `Error: ${error.message}`;

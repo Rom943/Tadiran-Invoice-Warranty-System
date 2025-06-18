@@ -9,7 +9,7 @@ const API_URL = 'https://tadiran-invoice-warranty-system.onrender.com'
 
 
 // Log the API URL for debugging
-console.log('Using API URL:', API_URL);
+
 
 interface ApiErrorResponse {
   success: boolean;
@@ -35,8 +35,6 @@ class ApiService {
     // Add request interceptor for logging
     this.api.interceptors.request.use(
       (config) => {
-        // Log request details for debugging
-        console.log(`API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
         return config;
       },
       (error) => Promise.reject(error)
@@ -48,13 +46,9 @@ class ApiService {
       (error: AxiosError<ApiErrorResponse>) => {
         // Format error message
         let errorMessage = 'אירעה שגיאה בשרת';
-        const originalError = error.toJSON ? error.toJSON() : { message: error.message };
-        console.log('API Error details:', JSON.stringify(originalError));
         
         if (error.response) {
           // The request was made and the server responded with an error status
-          console.log('Error response status:', error.response.status);
-          console.log('Error response data:', JSON.stringify(error.response.data));
           
           if (error.response.data?.message) {
             errorMessage = error.response.data.message;
@@ -63,7 +57,6 @@ class ApiService {
           }
         } else if (error.request) {
           // The request was made but no response was received
-          console.log('No response received from server');
           if (error.code === 'ECONNABORTED') {
             errorMessage = 'פג זמן ההמתנה לתשובה מהשרת, נסה שנית מאוחר יותר';
           } else {
@@ -88,7 +81,6 @@ class ApiService {
       await AsyncStorage.setItem('lastLoginTime', Date.now().toString());
       return response.data;
     } catch (error) {
-      console.log('Login error:', error);
       throw error;
     }
   }
@@ -105,7 +97,6 @@ class ApiService {
       await AsyncStorage.setItem('lastLoginTime', Date.now().toString());
       return response.data;
     } catch (error) {
-      console.log('Registration error:', error);
       throw error;
     }
   }
@@ -118,7 +109,6 @@ class ApiService {
       const response = await this.api.get('/api/installer/check-session');
       return response.data.success === true;
     } catch (error) {
-      console.log('Session check error:', error);
       return false;
     }
   }
@@ -128,7 +118,6 @@ class ApiService {
       const response = await this.api.post('/api/installer/logout');
       return response.data;
     } catch (error) {
-      console.log('Logout error:', error);
       throw error;
     }
   }
@@ -139,7 +128,6 @@ class ApiService {
       const response = await this.api.get(endpoint, config);
       return response.data;
     } catch (error: any) {
-      console.log(`GET ${endpoint} error:`, error);
       
       // Handle authorization errors
       if (error.response && error.response.status === 401) {
@@ -157,7 +145,6 @@ class ApiService {
       const response = await this.api.post(endpoint, data, config);
       return response.data;
     } catch (error: any) {
-      console.log(`POST ${endpoint} error:`, error);
       
       // Handle authorization errors
       if (error.response && error.response.status === 401) {
@@ -173,12 +160,6 @@ class ApiService {
     try {
       const timeout = config?.timeout || 60000;
       
-      console.log(`Uploading file to ${endpoint}`, { 
-        baseURL: API_URL,
-        timeout: timeout 
-      });
-      
-      // Use fetch API for better FormData support in React Native
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
       
@@ -200,8 +181,6 @@ class ApiService {
           errorData = { message: `HTTP ${response.status}` };
         }
         
-        console.log('Error response status:', response.status);
-        console.log('Error response data:', JSON.stringify(errorData));
         
         const errorMessage = errorData.message || `Request failed with status ${response.status}`;
         const error = new Error(errorMessage);
@@ -212,9 +191,6 @@ class ApiService {
       const data = await response.json();
       return data;
     } catch (error: any) {
-      console.log(`File upload to ${endpoint} error:`, error);
-      
-      // Add more specific error handling for file uploads
       // Create connection error message
       if (!error.response || error.code === 'ECONNABORTED') {
         const networkError = new Error('לא ניתן להתחבר לשרת, בדוק את החיבור לאינטרנט ונסה שנית');

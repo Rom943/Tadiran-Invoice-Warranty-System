@@ -38,9 +38,7 @@ export default function WarrantyHistoryScreen() {
       setError(null);
       const response = await WarrantyService.getAllWarranties();
       setWarranties(response.warranties); // Extract just the warranties array
-      console.log("Warranties loaded:", response.warranties);
     } catch (err) {
-      console.error("Failed to load warranties:", err);
       setError("Failed to load warranty data. Please try again.");
     } finally {
       setIsLoading(false);

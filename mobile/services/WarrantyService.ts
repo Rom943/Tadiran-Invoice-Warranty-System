@@ -6,12 +6,9 @@ export const WarrantyService = {
   // Add a function to test authentication before warranty submission
   testAuthentication: async (): Promise<boolean> => {
     try {
-      console.log('Testing authentication status...');
       const response = await ApiService.getWithAuth('/api/installer/check-session');
-      console.log('Authentication test result:', response);
       return response.success === true;
     } catch (error: any) {
-      console.error('Authentication test failed:', error.message);
       return false;
     }
   },
@@ -31,7 +28,6 @@ export const WarrantyService = {
       const response = await ApiService.getWithAuth(endpoint);
       
       if (response.success) {
-        console.log(response.data);
         return {
           warranties: response.data.map((item: any) => ({
             id: item.id,
@@ -48,7 +44,6 @@ export const WarrantyService = {
       
       throw new Error(response.message || 'Failed to fetch warranty data');
     } catch (error) {
-      console.log('Error fetching warranties:', error);
       throw error;
     }
   },
@@ -65,14 +60,11 @@ export const WarrantyService = {
   }): Promise<WarrantyRequest> => {
     try {
       // First, test authentication
-      console.log('Testing authentication before warranty submission...');
       const isAuthenticated = await WarrantyService.testAuthentication();
       if (!isAuthenticated) {
         throw new Error('Authentication failed. Please log in again.');
       }
-      console.log('Authentication confirmed. Proceeding with warranty submission.');
-      
-      console.log('Creating FormData for warranty submission');
+
       
       // Create form data for file upload
       const formData = new FormData();
@@ -82,36 +74,26 @@ export const WarrantyService = {
       formData.append('installDate', warrantyData.installationDate);
       
       
-      // Log file details before upload (for debugging)
-      console.log('File details:', {
-        uri: warrantyData.invoiceFile.uri,
-        name: warrantyData.invoiceFile.name,
-        type: warrantyData.invoiceFile.type || 'application/octet-stream'
-      });
-        // Add invoice file - make sure type is set correctly based on file
+
+ 
       const fileType = warrantyData.invoiceFile.name.endsWith('.pdf') 
         ? 'application/pdf' 
-        : 'image/jpeg'; // Use proper MIME type
+        : 'image/jpeg'; 
         
-      // @ts-ignore - FormData in React Native has a slightly different interface
+   
       formData.append('invoiceImage', {
         uri: warrantyData.invoiceFile.uri,
         name: warrantyData.invoiceFile.name,
         type: fileType,
-      } as any);console.log('Submitting warranty request to API');
-      console.log('Form data being sent:', {
-        clientName: warrantyData.clientName,
-        productSN: warrantyData.productInfo,
-        installDate: warrantyData.installationDate,
-        invoiceImage: 'File attached'
-      });
+      } as any);
+
       
       // Submit warranty request with a longer timeout for file uploads
       const response = await ApiService.uploadFile('/api/warranties', formData, {
         timeout: 60000 // 60 seconds timeout for uploads
       });
       
-      console.log('Warranty API response received:', response);
+
       
       if (response.success) {
         return {
@@ -127,7 +109,7 @@ export const WarrantyService = {
       
       throw new Error(response.message || 'Failed to submit warranty request');
     } catch (error: any) {
-      console.log('Error submitting warranty:', error.message);
+
       // Check if it's a network-related error message from ApiService or a generic network error
       if (error.message.includes('לא ניתן להתחבר לשרת') || error.message.includes('Network Error') || error.message.includes('timeout') || error.message.includes('Failed to fetch')) {
         throw new Error('לא ניתן להתחבר לשרת, בדוק את החיבור לאינטרנט ונסה שנית');
@@ -153,7 +135,6 @@ export const WarrantyService = {
         };
       }      throw new Error(response.message || 'Failed to fetch warranty details');
     } catch (error) {
-      console.log('Error fetching warranty details:', error);
       throw error;
     }  },
   // Process invoice OCR
@@ -163,13 +144,10 @@ export const WarrantyService = {
   ): Promise<'approved' | 'rejected' | 'pending'> => {
     try {
       // The OCR processing is handled on the backend as part of warranty creation
-      // This method remains for future implementation of separate OCR processing
-      console.log('OCR processing handled on the server during warranty creation');
-      
       // Return pending since the actual OCR happens during warranty creation on the backend
       return 'pending';
     } catch (error) {
-      console.log('Error processing invoice:', error);
+
       return 'pending'; // Default to pending if there's an error
     }
   }

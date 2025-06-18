@@ -60,26 +60,33 @@ export const authProvider: AuthProvider = {  // Called when the user attempts to
       return Promise.reject(error);
     }
   },
-
   // Called when the user clicks on the logout button
   logout: async () => {
     try {
-      await fetch(`${API_URL}/admin/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const token = localStorage.getItem('token');
+      if (token) {
+        await fetch(`${API_URL}/admin/logout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+      }
     } catch (error) {
       console.error('Logout error:', error);
     }
     
+    // Clear all authentication data
     localStorage.removeItem('admin');
+    localStorage.removeItem('token');
     return Promise.resolve();
   },
-
   // Called when the API returns an error
   checkError: ({ status }: { status: number }) => {
     if (status === 401 || status === 403) {
       localStorage.removeItem('admin');
+      localStorage.removeItem('token');
       return Promise.reject();
     }
     return Promise.resolve();
