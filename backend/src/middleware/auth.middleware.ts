@@ -19,6 +19,7 @@ declare global {
  * @param next - Express next function
  */
 export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
+  console.log("cookie:", req.cookies.token);
   try {
     let token = req.cookies.token;
 
