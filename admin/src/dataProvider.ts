@@ -46,12 +46,9 @@ const apiRequest = async (url: string, options: any = {}) => {
     headers,
   };
 
-  console.log("API Request:", url, "Headers:", headers);
   try {
     const response = await fetch(url, finalOptions);
-    console.log("API Response status:", response.status);
     const responseData = await handleResponse(response);
-    console.log("API Response data:", responseData);
     return responseData;  } catch (error) {
     console.error("API request error:", error);
     console.error("Error details:", error instanceof Error ? error.message : String(error));
@@ -112,7 +109,6 @@ export const dataProvider: DataProvider = {
     }
 
     const response = await apiRequest(url);
-    console.log(response);
 
     return {
       data: response.data.map((item: any) => ({
@@ -251,7 +247,6 @@ export const dataProvider: DataProvider = {
     }
     const { data } = params;
 
-    console.log(`Updating ${resource} with id ${params.id}:`, data);
 
     const response = await apiRequest(url, {
       method: "PUT",
@@ -270,8 +265,8 @@ export const dataProvider: DataProvider = {
 
   create: async (resource, params) => {
     let url = "";
-    console.log("dataProvider.create - resource:", resource, "params:", params);    if (resource === "registrationKeys") {
-      console.log("registrationKeys")
+   
+    if (resource === "registrationKeys") {
       // Special handling for creating registration keys
       url = `${API_URL}/keys`; // Assuming this is the endpoint
 
@@ -284,7 +279,6 @@ export const dataProvider: DataProvider = {
       };
     }    else if (resource === "admins") {
       url = `${API_URL}/admin/register`;
-      console.log("Creating admin user with params:", params.data);
       
       const response = await apiRequest(url, {
         method: "POST",

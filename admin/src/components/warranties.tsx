@@ -114,7 +114,6 @@ const WarrantyFormFields = () => {
     const [upadte] = useUpdate();
     const onSubmit = async (values:any) => {
         setLoading(true);
-        console.log('Submitting warranty form:', record);
         try {
             if (!record || !record.id) {
                 console.error('No record found or record ID is missing');

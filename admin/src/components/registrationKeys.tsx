@@ -28,7 +28,6 @@ const DeleteKeyButton = () => {
   if (!record) return null;
 
   const handleDelete = () => {
-    console.log('Deleting registration key:', record);
     deleteOne(
       'registrationKeys',
       { id: record.id },

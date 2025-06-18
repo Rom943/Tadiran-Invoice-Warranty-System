@@ -8,7 +8,7 @@ export const authProvider: AuthProvider = {  // Called when the user attempts to
     try {
       // React-admin uses 'username' for the login field, but our API expects 'email'
       const email = username;
-      console.log('Attempting login for email:', email);
+
 
       if (!email || !password) {
         console.error('Missing credentials:', { email, password });
@@ -25,10 +25,9 @@ export const authProvider: AuthProvider = {  // Called when the user attempts to
         body: JSON.stringify({ email, password }),
       });
       
-      console.log('Login response status:', response.status);
+
       const responseText = await response.text();
-      console.log('Login response text:', responseText);
-      console.log('Login request headers:', response.headers);
+
 
       
       // Detailed error logging
@@ -43,10 +42,8 @@ export const authProvider: AuthProvider = {  // Called when the user attempts to
       }
       
       const data = JSON.parse(responseText);
-      console.log('Login response data:', data);
 
       if (data.success) {
-        console.log('Login successful, storing token...');
         // Store the token for subsequent requests
         localStorage.setItem('token', data.data.token);
         localStorage.setItem('admin', JSON.stringify(data.data));
