@@ -46,7 +46,10 @@ export const authProvider: AuthProvider = {  // Called when the user attempts to
       console.log('Login response data:', data);
 
       if (data.success) {
-        console.log('Login successful, relying on cookies for authentication...');
+        console.log('Login successful, storing token...');
+        // Store the token for subsequent requests
+        localStorage.setItem('token', data.data.token);
+        localStorage.setItem('admin', JSON.stringify(data.data));
         return Promise.resolve();
       } else {
         console.error('Login response indicated failure:', data);
