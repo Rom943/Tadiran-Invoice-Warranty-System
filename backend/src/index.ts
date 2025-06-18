@@ -25,16 +25,12 @@ app.use(cors({
 const allowedOrigins = [
   'https://tadiran-invoice-warranty-system-h7ilvomsf-rom943s-projects.vercel.app',
   'https://tadiran-invoice-warranty-system.vercel.app',
-  'https://tadiran-invoice-warranty-system.vercel.app/#/login',
-  'http://localhost:5173',
 ];
 
-     console.log(`CORS request from origin: ${origin}`);
+
     if (!origin || allowedOrigins.includes(origin)) {
-      console.log(`CORS allowed for origin: ${origin}`);
       callback(null, true);
     } else {
-      console.log(`CORS rejected for origin: ${origin}`);
       callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
@@ -61,9 +57,8 @@ const openApiSpec = JSON.parse(
 );
 
 // Update server URL based on environment
-openApiSpec.servers = isProd 
-  ? [{ url: 'https://tadiran-invoice-warranty-system.onrender.com', description: 'Production server' }]
-  : [{ url: 'http://localhost:3000', description: 'Development server' }];
+openApiSpec.servers = [{ url: 'https://tadiran-invoice-warranty-system.onrender.com', description: 'Production server' }]
+
 
 // Setup Swagger UI with static spec
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
